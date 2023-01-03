@@ -4,7 +4,7 @@ An open-source, Python implementation of Munoz & Serrano's AGADIR model of α-he
 
 ## Install
 
-This package has been uploaded to the Python Package Index (PyPI (https://pypi.org/project/pyagadir/1.0.0/) and can be installed with:
+This package has been uploaded to the Python Package Index (PyPI (https://pypi.org/project/pyagadir/) and can be installed with:
 ```
 pip install pyagadir
 ```
