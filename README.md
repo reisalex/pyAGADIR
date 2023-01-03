@@ -11,8 +11,8 @@ pip install pyagadir
 
 ## Usage
 
-The most simple way to use this package is to import and invoke `predict_alphahelix` where `helical_propensity` is the probability that each residue is the alpha-helical conformation (list of floats) and `result.percent_helix` is the mean helical propensity (probability) for the full peptide (float):
-```
+The most simple way to use this package is to import and invoke `predict_alphahelix()` where `result.helical_propensity` is the probability that each residue is the alpha-helical conformation (list of floats) and `result.percent_helix` is the mean helical propensity (probability) for the full peptide (float):
+```python
 >>> from pyagadir import predict_alphahelix
 >>> result = predict_alphahelix('ILKSLEEFLKVTLRSTRQT')
 >>> print(f'Percent helix: {result.percent_helix}')
@@ -25,7 +25,7 @@ Per-residue helical propensity: [0.00734307 0.01717528 0.03517554 0.13830898 0.1
 ```
 
 Advanced users may want to modify the partition function to an alternate approximation (e.g. residue, `'r'`) or inspect the detailed dG predicted values. The model class `AGADIR` can be directly imported and invoked. The result object is an instance of `ModelResult` (found in `pyagadir.models`) with more detailed free energy values saved during calculation (stored values are listed below). Example:
-```
+```python
 >>> from pyagadir.models import AGADIR
 >>> model = AGADIR(method='r')
 >>> result = model.predict('ILKSLEEFLKVTLRSTRQT')
@@ -37,27 +37,27 @@ dG_Int array (kcal/mol): [0.96 0.8  0.76 1.13 0.8  0.95 0.95 1.08 0.8  0.76 1.12
 ## Stored Data in ModelResult
 
 ```
-    > seq       :: peptide sequence (str)
+> seq       :: peptide sequence (str)
 
-    # for each residue/index position
-    > int_array :: dG_Int   (np.array of shape(seq,1))
-    > i1_array  :: dG_i,i+1 (np.array of shape(seq,1))
-    > i3_array  :: dG_i,i+3 (np.array of shape(seq,1))
-    > i4_array  :: dG_i,i+4 (np.array of shape(seq,1))
-    > N_array   :: dG_Ncap  (np.array of shape(seq,1))
-    > C_array   :: dG_Ccap  (np.array of shape(seq,1))
+# for each residue/index position
+> int_array :: dG_Int   (np.array of shape(seq,1))
+> i1_array  :: dG_i,i+1 (np.array of shape(seq,1))
+> i3_array  :: dG_i,i+3 (np.array of shape(seq,1))
+> i4_array  :: dG_i,i+4 (np.array of shape(seq,1))
+> N_array   :: dG_Ncap  (np.array of shape(seq,1))
+> C_array   :: dG_Ccap  (np.array of shape(seq,1))
 
-    > dG_dict_mat :: dG_dict's in list of lists where indexing corresponds to [j][i] (see Muñoz, V., & Serrano, L. (1994)); dG_dict includes each term used in computing dG_Helix for a given helical segment of length j at position i (Python indexing).
+> dG_dict_mat :: dG_dict's in list of lists where indexing corresponds to [j][i] (see Muñoz, V., & Serrano, L. (1994)); dG_dict includes each term used in computing dG_Helix for a given helical segment of length j at position i (Python indexing).
 
-    # statistical weights and partition functions
-    > K_tot       :: sum of statistical weights for AGADIR1s (one-sequence) (float)
-    > K_tot_array :: array of summed statistical weights for AGADIR (residue) (np.array of shape(seq,1))
-    > Z           :: residue parition function for AGADIR1s (one-sequence) (float)
-    > Z_array     :: residue parition function for AGADIR (residue) (np.array of shape(seq,1))
+# statistical weights and partition functions
+> K_tot       :: sum of statistical weights for AGADIR1s (one-sequence) (float)
+> K_tot_array :: array of summed statistical weights for AGADIR (residue) (np.array of shape(seq,1))
+> Z           :: residue parition function for AGADIR1s (one-sequence) (float)
+> Z_array     :: residue parition function for AGADIR (residue) (np.array of shape(seq,1))
 
-    # final predicted values
-    > helical_propensity :: probability that each residue is in the alpha-helical conformation (np.array of shape(seq,1))
-    > percent_helix      :: mean helical propensity, or probability of peptide is an alpha-helix (float)
+# final predicted values
+> helical_propensity :: probability that each residue is in the alpha-helical conformation (np.array of shape(seq,1))
+> percent_helix      :: mean helical propensity, or probability of peptide is an alpha-helix (float)
 ```
 
 ## To Do
