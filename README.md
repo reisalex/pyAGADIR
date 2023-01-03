@@ -1,6 +1,6 @@
-# &alpha;-helix probability model (AGADIR)
+# α-helix probability model (AGADIR)
 
-An open-source, Python implementation of Munoz & Serrano's AGADIR model of alpha-helix formation. This model uses statistical mechanics and energy parameters trained on a database of over 400 peptides to predict the alpha-helical tendency (probability) per residue for a given peptide (see references).
+An open-source, Python implementation of Munoz & Serrano's AGADIR model of α-helix formation. This model uses statistical mechanics and energy parameters trained on a database of over 400 peptides to predict the α-helical tendency (probability) per residue for a given peptide (see references).
 
 ## Install
 
@@ -11,7 +11,7 @@ pip install pyagadir
 
 ## Usage
 
-The most simple way to use this package is to import and invoke `predict_alphahelix()` where `result.helical_propensity` is the probability that each residue is the alpha-helical conformation (list of floats) and `result.percent_helix` is the mean helical propensity (probability) for the full peptide (float):
+The most simple way to use this package is to import and invoke `predict_alphahelix()` where `result.helical_propensity` is the probability that each residue is the α-helical conformation (list of floats) and `result.percent_helix` is the mean helical propensity (probability) for the full peptide (float):
 ```python
 >>> from pyagadir import predict_alphahelix
 >>> result = predict_alphahelix('ILKSLEEFLKVTLRSTRQT')
