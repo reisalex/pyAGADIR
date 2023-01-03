@@ -1,4 +1,4 @@
-# Alpha-helix probability model (AGADIR)
+# &alpha;-helix probability model (AGADIR)
 
 An open-source, Python implementation of Munoz & Serrano's AGADIR model of alpha-helix formation. This model uses statistical mechanics and energy parameters trained on a database of over 400 peptides to predict the alpha-helical tendency (probability) per residue for a given peptide (see references).
 
