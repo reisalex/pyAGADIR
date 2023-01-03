@@ -174,7 +174,7 @@ class ModelResult(object):
         n = len(seq)
         self.dG_dict_mat = [None for j in range(6)]+\
                            [[None for _ in range(0,n-j+1)] for j in range(6,n+1)]
-        self.K_all       = np.nan*np.ones((len(seq)+1,len(seq)))
+        self.K_tot       = 0.0
         self.K_tot_array = np.zeros(len(seq))
         self.Z           = 0.0
         self.Z_array     = np.zeros(len(seq))
@@ -182,7 +182,7 @@ class ModelResult(object):
         self.percent_helix = 0.0
 
     def __repr__(self):
-        pass
+        return str(self.helical_propensity)
 
     def get_helical_propensity(self):
         return self.helical_propensity
@@ -193,6 +193,10 @@ class ModelResult(object):
 class AGADIR(object):
 
     method_options = ['r','1s','ms']
+    lambdas = {
+        'r':  lambda result: result.K_tot_array / result.Z_array,
+        '1s': lambda result: result.K_tot_array / result.Z
+    }
 
     def __init__(self, method='1s'):
         assert method in self.method_options, \
@@ -202,13 +206,14 @@ class AGADIR(object):
                 'ms': Multiple-sequence approximation. \
             See documentation and AGADIR papers for more information. \
             "
-        self.method = method
+        self._method = method
+        self._probability_fxn = self.lambdas[method]
 
     def _calc_helical_propensity(self):
         result = self.result
         result.Z_array = 1.0 + result.K_tot_array
-        result.helical_propensity = result.K_tot_array / result.Z_array # AGADIR
-        #result.helical_propensity = result.K_tot_array / result.Z # AGADIR1s
+        result.Z       = 1.0 + result.K_tot
+        result.helical_propensity = self._probability_fxn(result)
         result.percent_helix = np.round(np.mean(result.helical_propensity),3)
 
     def _initialize_params(self):
@@ -252,7 +257,7 @@ class AGADIR(object):
                 result.dG_dict_mat[j][i] = dG_dict
                 K = calc_K(dG_Hel)
                 result.K_tot_array[i:i+j] += K # method='r'
-                result.Z += K # method='1s'
+                result.K_tot += K # method='1s'
 
         # if method='ms' (custom calculation here with result.dG_dict_mat)
 
