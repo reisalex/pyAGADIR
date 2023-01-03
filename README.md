@@ -31,7 +31,7 @@ Advanced users may want to modify the partition function to an alternate approxi
 >>> from pyagadir.models import AGADIR
 >>> model = AGADIR(method='r')
 >>> result = model.predict('ILKSLEEFLKVTLRSTRQT')
->>> print(f'dG_Int array (kcal/mol): {result.self.int_array}')
+>>> print(f'dG_Int array (kcal/mol): {result.int_array}')
 ```
 ```
 dG_Int array (kcal/mol): [0.96 0.8  0.76 1.13 0.8  0.95 0.95 1.08 0.8  0.76 1.12 1.18 0.8  0.67
