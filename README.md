@@ -4,7 +4,7 @@ An open-source, Python implementation of Munoz & Serrano's AGADIR model of α-he
 
 ## Install
 
-This package has been uploaded to the Python Package Index (PyPI) and can be installed with:
+This package has been uploaded to the Python Package Index (PyPI (https://pypi.org/project/pyagadir/1.0.0/) and can be installed with:
 ```
 pip install pyagadir
 ```
@@ -83,5 +83,5 @@ Muñoz, V., & Serrano, L. (1995). Elucidating the Folding Problem of Helical Pep
 
 Lacroix, E., Viguera, A. R., & Serrano, L. (1998). Elucidating the folding problem of α-helices: local motifs, long-range electrostatics, ionic-strength dependence and prediction of NMR parameters. Journal of molecular biology, 284(1), 173-191. https://doi.org/10.1006/jmbi.1998.2145
 
-Munoz, V., & Serrano, L. (1997). Development of the multiple sequence approximation within the AGADIR model of α‐helix formation: Comparison with Zimm‐Bragg and Lifson‐Roig formalisms. Biopolymers: Original Research on Biomolecules, 41(5), 495-509. https://doi.org/10.1002/(SICI)1097-0282(19970415)41:5<495::AID-BIP2>3.0.CO;2-H
+Munoz, V., & Serrano, L. (1997). Development of the multiple sequence approximation within the AGADIR model of α‐helix formation: Comparison with Zimm‐Bragg and Lifson‐Roig formalisms. Biopolymers: Original Research on Biomolecules, 41(5), 495-509. [https://doi.org/10.1002/(SICI)1097-0282(19970415)41:5<495::AID-BIP2>3.0.CO;2-H](https://doi.org/10.1002/(SICI)1097-0282(19970415)41:5<495::AID-BIP2>3.0.CO;2-H)
 
