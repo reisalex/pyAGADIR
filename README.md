@@ -17,6 +17,8 @@ The most simple way to use this package is to import and invoke `predict_alphahe
 >>> result = predict_alphahelix('ILKSLEEFLKVTLRSTRQT')
 >>> print(f'Percent helix: {result.percent_helix}')
 >>> print(f'Per-residue helical propensity: {result.helical_propensity}')
+```
+```
 Percent helix: 0.092
 Per-residue helical propensity: [0.00734307 0.01717528 0.03517554 0.13830898 0.16129371 0.17397703
  0.17788564 0.17859396 0.17903603 0.17499225 0.14250647 0.12157049
@@ -30,6 +32,8 @@ Advanced users may want to modify the partition function to an alternate approxi
 >>> model = AGADIR(method='r')
 >>> result = model.predict('ILKSLEEFLKVTLRSTRQT')
 >>> print(f'dG_Int array (kcal/mol): {result.self.int_array}')
+```
+```
 dG_Int array (kcal/mol): [0.96 0.8  0.76 1.13 0.8  0.95 0.95 1.08 0.8  0.76 1.12 1.18 0.8  0.67
  1.13 1.18 0.67 0.93 1.18]
 ```
