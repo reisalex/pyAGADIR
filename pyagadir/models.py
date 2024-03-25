@@ -2,6 +2,9 @@
 from importlib.resources import files
 import numpy  as np
 import pandas as pd
+from typing import List
+import numpy as np
+import numpy as np
 
 # get params
 datapath = files('pyagadir.data')
@@ -152,64 +155,113 @@ def calc_dG_Hel(i, j, result):
 
     return dG_Hel, dG_dict
 
-R = 1.987204258e-3 # kcal/mol/K
-celsius_2_kelvin = lambda T: T + 273.0
-def calc_K(dG_Hel, T=5.0):
-    RT = R*celsius_2_kelvin(T)
-    return np.exp(-dG_Hel/RT)
+
+def calc_K(dG_Hel: float, T: float = 5.0) -> float:
+    """
+    Calculate the equilibrium constant K.
+
+    Args:
+        dG_Hel (float): The Helix free energy.
+        T (float, optional): Temperature in Celsius. Defaults to 5.0.
+
+    Returns:
+        float: The equilibrium constant K.
+    """
+    R = 1.987204258e-3 # kcal/mol/K
+    celsius_2_kelvin = lambda T: T + 273.0
+    RT = R * celsius_2_kelvin(T)
+    return np.exp(-dG_Hel / RT)
+
 
 class ModelResult(object):
+    """
+    Class representing the result of a model.
+    """
 
-    def __init__(self, seq):
-        
-        self.seq  = seq
+    def __init__(self, seq: str) -> None:
+        """
+        Initialize the ModelResult object.
 
-        self.int_array   = np.zeros(len(seq))
-        self.i1_array    = np.zeros(len(seq))
-        self.i3_array    = np.zeros(len(seq))
-        self.i4_array    = np.zeros(len(seq))
-        self.N_array     = np.zeros(len(seq))
-        self.C_array     = np.zeros(len(seq))
-        
+        Args:
+            seq (str): The sequence.
+        """
+        self.seq = seq
+        self.int_array = np.zeros(len(seq))
+        self.i1_array = np.zeros(len(seq))
+        self.i3_array = np.zeros(len(seq))
+        self.i4_array = np.zeros(len(seq))
+        self.N_array = np.zeros(len(seq))
+        self.C_array = np.zeros(len(seq))
         n = len(seq)
-        self.dG_dict_mat = [None for j in range(6)]+\
-                           [[None for _ in range(0,n-j+1)] for j in range(6,n+1)]
-        self.K_tot       = 0.0
+        self.dG_dict_mat = [None for j in range(6)] + [[None for _ in range(0, n - j + 1)] for j in range(6, n + 1)]
+        self.K_tot = 0.0
         self.K_tot_array = np.zeros(len(seq))
-        self.Z           = 0.0
-        self.Z_array     = np.zeros(len(seq))
+        self.Z = 0.0
+        self.Z_array = np.zeros(len(seq))
         self.helical_propensity = np.zeros(len(seq))
         self.percent_helix = 0.0
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the helical propensity.
+
+        Returns:
+            str: The helical propensity.
+        """
         return str(self.helical_propensity)
 
-    def get_helical_propensity(self):
+    def get_helical_propensity(self) -> np.ndarray:
+        """
+        Get the helical propensity.
+
+        Returns:
+            np.ndarray: The helical propensity.
+        """
         return self.helical_propensity
 
-    def get_percent_helix(self):
+    def get_percent_helix(self) -> float:
+        """
+        Get the percentage of helix.
+
+        Returns:
+            float: The percentage of helix.
+        """
         return self.percent_helix
 
-class AGADIR(object):
 
-    method_options = ['r','1s','ms']
+class AGADIR(object):
+    """
+    AGADIR class for predicting helical propensity using AGADIR method.
+    """
+
+    method_options = ['r','1s']
     lambdas = {
         'r':  lambda result: result.K_tot_array / result.Z_array,
         '1s': lambda result: result.K_tot_array / result.Z
     }
 
-    def __init__(self, method='1s'):
-        assert method in self.method_options, \
-            "Method provided must be one of ['r','1s','ms']; \
+    def __init__(self, method: str = '1s'):
+        """
+        Initialize AGADIR object.
+
+        Args:
+            method (str): Method for calculating helical propensity. Must be one of ['r','1s'].
+                'r' : Residue partition function.
+                '1s': One-sequence approximation.
+        """
+        if method not in self.method_options:
+            raise ValueError("Method provided must be one of ['r','1s']; \
                 'r' : Residue partition function. \
                 '1s': One-sequence approximation. \
-                'ms': Multiple-sequence approximation. \
             See documentation and AGADIR papers for more information. \
-            "
+            ")
         self._method = method
         self._probability_fxn = self.lambdas[method]
 
     def _calc_helical_propensity(self):
+        """
+        Calculate helical propensity based on the selected method.
+        """
         result = self.result
         result.Z_array = 1.0 + result.K_tot_array
         result.Z       = 1.0 + result.K_tot
@@ -217,7 +269,9 @@ class AGADIR(object):
         result.percent_helix = np.round(np.mean(result.helical_propensity),3)
 
     def _initialize_params(self):
-        
+        """
+        Initialize parameters for energy calculations.
+        """
         result = self.result
         seq = result.seq
 
@@ -246,7 +300,9 @@ class AGADIR(object):
             result.C_array[i] = get_dG_Ccap(seq[i])
 
     def _calc_partition_fxn(self):
-        
+        """
+        Calculate partition function for helical segments.
+        """
         result = self.result
         seq    = self.result.seq
 
@@ -261,7 +317,16 @@ class AGADIR(object):
 
         # if method='ms' (custom calculation here with result.dG_dict_mat)
 
-    def predict(self, seq):
+    def predict(self, seq: str) -> ModelResult:
+        """
+        Predict helical propensity for a given sequence.
+
+        Args:
+            seq (str): Input sequence.
+
+        Returns:
+            ModelResult: Object containing the predicted helical propensity.
+        """
         result = self.result = ModelResult(seq)
         self._initialize_params()
         self._calc_partition_fxn()
