@@ -115,5 +115,116 @@ def test_custom_predict():
 
 
 
-# add test using good and bade helices
+# test using data from papers
+def test_paper_data_figure_3():
+    # These were extracted from Figure 3 in https://doi.org/10.1002/(SICI)1097-0282(19970415)41:5<495::AID-BIP2>3.0.CO;2-H
+    # the values are approximate, expect some error
+    x_vals_fig_3 = [1, 2, 4, 6, 7, 9, 10, 12, 14, 15]
+    y_vals_fig_3 = [54.9, 46.6, 44.3, 35.5, 46.5, 26.5, 26.5, 36.5, 28.6, 34.9]
+
+    # The peptide sequences come from Table 1 in https://doi.org/10.1002/pro.5560021006 (with original data in Fig 1B)
+    peptides = ['DAQAAAAQAAAAQAAY',
+                'ADQAAAAQAAAAQAAY',
+                'AAQDAAAQAAAAQAAY',
+                'AAQAADAQAAAAQAAY',
+                'AAQAAADQAAAAQAAY',
+                'AAQAAAAQDAAAQAAY',
+                'AAQAAAAQADAAQAAY',
+                'AAQAAAAQAAADQAAY',
+                'AAQAAAAQAAAAQDAY',
+                'AAQAAAAQAAAAQADY',]
+
+    for i, pept in enumerate(peptides):
+        model = AGADIR(method='1s')
+        result = model.predict(pept)
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_3[i]) < 2.0
+
+
+# test using data from papers
+def test_paper_data_figure_4A():
+    # These were extracted from Figure 4 in https://doi.org/10.1002/(SICI)1097-0282(19970415)41:5<495::AID-BIP2>3.0.CO;2-H
+    # the values are approximate, expect some error
+
+    # Figure 4A, AAQAA repeats, both methods should give comparable results (using the AGADIRms values becaus the paper states that 1s and ms are similar)
+    y_vals_fig_4A = [0.0,
+                     15.7,
+                     41.3,
+                     61.3]
+    peptides_fig_4A = ['AAQAA',
+                       'AAQAAAAQAA',
+                       'AAQAAAAQAAAAQAA',
+                       'AAQAAAAQAAAAQAAAAQAA']
     
+    for i, pept in enumerate(peptides_fig_4A):
+        model = AGADIR(method='1s')
+        result = model.predict(pept)
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4A[i]) < 2.0
+
+    for i, pept in enumerate(peptides_fig_4A):
+        model = AGADIR(method='r')
+        result = model.predict(pept)
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4A[i]) < 2.0
+
+
+def test_paper_data_figure_4B():
+    # These were extracted from Figure 4 in https://doi.org/10.1002/(SICI)1097-0282(19970415)41:5<495::AID-BIP2>3.0.CO;2-H
+    # the values are approximate, expect some error
+
+    # Figure 4B, AAKAA repeats, AGADIR should predict more helix than AGADIR1s (using the AGADIRms values becaus the paper states that 1s and ms are similar)
+    y_vals_fig_4B_r = [51.8,
+                       80.7,
+                       94.0,
+                       100.6,
+                       100.5]
+    y_vals_fig_4B_1s = [50.5,
+                        71.4,
+                        80.7,
+                        89.4,
+                        91.7]
+    peptides_fig_4B = ['AAKAAAAKAAAAKAA',
+                       'AAKAAAAKAAAAKAAAAKAA',
+                       'AAKAAAAKAAAAKAAAAKAAAAKAA',
+                       'AAKAAAAKAAAAKAAAAKAAAAKAAAAKAAAAKAAAAKAA',
+                       'AAKAAAAKAAAAKAAAAKAAAAKAAAAKAAAAKAAAAKAAAAKAAAAKAA']
+
+    for i, pept in enumerate(peptides_fig_4B):
+        model = AGADIR(method='1s')
+        result = model.predict(pept)
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4B_1s[i]) < 2.0
+
+    for i, pept in enumerate(peptides_fig_4B):
+        model = AGADIR(method='r')
+        result = model.predict(pept)
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4B_r[i]) < 2.0
+
+
+def test_paper_data_figure_4C():
+    # These were extracted from Figure 4 in https://doi.org/10.1002/(SICI)1097-0282(19970415)41:5<495::AID-BIP2>3.0.CO;2-H
+    # the values are approximate, expect some error
+
+    # Figure 4C, AEAAKA repeats
+    y_vals_fig_4C_r = [48.0,
+                       79.2,
+                       94.1,
+                       100.1,
+                       100.5]
+    y_vals_fig_4C_1s = [48.3,
+                        72.7,
+                        82.6,
+                        89.8,
+                        92.8]
+    peptides_fig_4C = ['AEAAKAAEAAKAAEAAKA',
+                       'AEAAKAAEAAKAAEAAKAAEAAKA',
+                       'AEAAKAAEAAKAAEAAKAAEAAKAAEAAKA',
+                       'AEAAKAAEAAKAAEAAKAAEAAKAAEAAKAAEAAKAAEAAKAAEAAKA',
+                       'AEAAKAAEAAKAAEAAKAAEAAKAAEAAKAAEAAKAAEAAKAAEAAKAAEAAKAAEAAKA']
+    
+    for i, pept in enumerate(peptides_fig_4C):
+        model = AGADIR(method='1s')
+        result = model.predict(pept)
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4C_1s[i]) < 2.0
+
+    for i, pept in enumerate(peptides_fig_4C):
+        model = AGADIR(method='r')
+        result = model.predict(pept)
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4C_r[i]) < 2.0
