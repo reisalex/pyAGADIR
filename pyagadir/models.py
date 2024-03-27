@@ -7,28 +7,33 @@ from typing import List, Tuple, Dict
 # get params
 datapath = files('pyagadir.data')
 
+# load energy contributions for intrinsic propensities, capping, etc.
 table2 = pd.read_csv(
     datapath.joinpath('table2.csv'),
     index_col='AA',
 ).astype(float)
 
+# load energy contributions between amino acids and the helix macrodipole, focusing on the C-terminal
 table3a = pd.read_csv(
     datapath.joinpath('table3a.csv'),
     index_col='AA',
 ).astype(float)
 table3a.columns = table3a.columns.astype(int)
 
+# load energy contributions between amino acids and the helix macrodipole, focusing on the N-terminal
 table3b = pd.read_csv(
     datapath.joinpath('table3b.csv'),
     index_col='AA',
 ).astype(float)
 table3b.columns = table3b.columns.astype(int)
 
+# load energy contributions for interactions between i and i+3
 table4a = pd.read_csv(
     datapath.joinpath('table4a.csv'),
     index_col='index',
 ).astype(float)
 
+# load energy contributions for interactions between i and i+4
 table4b = pd.read_csv(
     datapath.joinpath('table4b.csv'),
     index_col='index',
@@ -60,8 +65,8 @@ class ModelResult(object):
         self.K_tot_array = np.zeros(len(seq))
         self.Z = 0.0
         self.Z_array = np.zeros(len(seq))
-        self.helical_propensity = np.zeros(len(seq))
-        self.percent_helix = 0.0
+        self.helical_propensity = None
+        self.percent_helix = None
 
     def __repr__(self) -> str:
         """
@@ -176,21 +181,33 @@ def get_dG_Ncap(seq: str) -> float:
     """
     Ncap = seq[0]
 
+    # possible formation for capping box
+    # when Glu (E) at N+3 (Harper & Rose, 1993;
+    # Dasgupta & Bell, 1993)
     if seq[3] in ['E', 'Q', 'D']:
         dG_Ncap = table2.loc[Ncap, 'Capp_box']
 
+        # Other capping box options:
+        # Gln (Q) or Asp (D)
         if seq[3] in ['Q', 'D'] and dG_Ncap < 0.0:
             dG_Ncap *= 0.625
 
+        # special capping box case
+        # when there is a Pro (P) at N+1
         if seq[1] == 'P':
             dG_Ncap += table2.loc[Ncap, 'Pro_N1']
     else:
         dG_Ncap = table2.loc[Ncap, 'N_cap']
 
+    # Asp (D) + 2 special hydrogen bond
+    # (Bell et al., 1992; Dasgurpta & Bell, 1993)
     if seq[2] == 'D':
         dG_Ncap = min(table2.loc[Ncap, 'Asp_2'], dG_Ncap)
+        # only update if more negative
+        # (Pro N+1 is sometimes more stabilizing)
 
     return dG_Ncap
+
 
 def get_dG_Ccap(AA: str) -> float:
     """
@@ -215,69 +232,21 @@ def get_dG_dipole(seq: str) -> float:
         float: The dipole free energy contribution.
     """
     N = len(seq)
-    dG_dipole = 0.0
+    dG_N_dipole = 0.0
+    dG_C_dipole = 0.0
 
+    # N-term dipole contributions
     for i in range(0, min(N, 10)):
         AA = seq[i]
-        dG_dipole += table3a.loc[AA, i]
+        dG_N_dipole += table3a.loc[AA, i]
 
-    # C-term contributions (positive)
-    for i in range(-1, -1 * min(N, 10) - 1, -1):
-        AA = seq[i]
-        dG_dipole += table3b.loc[AA, i]
+    # C-term dipole contributions
+    seq_inv = seq[::-1]
+    for i in range(0, min(N, 10)):
+        AA = seq_inv[i]
+        dG_C_dipole += table3b.loc[AA, i*-1]
 
-    return dG_dipole
-
-
-def calc_dG_Hel(i: int, j: int, result: ModelResult) -> Tuple[float, Dict[str, float]]:
-    """
-    Calculate the Helix free energy and its components.
-
-    Args:
-        i (int): The start index of the helical segment.
-        j (int): The length of the helical segment.
-        result (ModelResult): The result object.
-
-    Returns:
-        Tuple[float, Dict[str, float]]: The Helix free energy and its components.
-    """
-
-    dG_Int = sum(result.int_array[i:i + j])
-
-    # custom case when Pro at N+1
-    if result.seq[i + 1] == 'P':
-        dG_Int += (0.66 - 3.33)
-
-    dG_Hbond = get_dG_Hbond(j)
-    dG_i1_tot = sum(result.i1_array[i:i + j - 1])
-
-    dG_i3_tot = sum(result.i3_array[i:i + j - 3])
-    dG_i4_tot = sum(result.i4_array[i:i + j - 4])
-    dG_SD = dG_i1_tot + dG_i3_tot + dG_i4_tot
-
-    dG_Ncap = result.N_array[i]
-    dG_Ccap = result.C_array[i + j - 1]
-    dG_nonH = dG_Ncap + dG_Ccap
-
-    dG_dipole = get_dG_dipole(result.seq[i:i + j])
-
-    dG_Hel = dG_Int + dG_Hbond + dG_SD + dG_nonH + dG_dipole
-
-    dG_dict = {
-        'dG_Helix': dG_Hel,
-        'dG_Int': dG_Int,
-        'dG_Hbond': dG_Hbond,
-        'dG_SD': dG_SD,
-        'dG_nonH': dG_nonH,
-        'dG_dipole': dG_dipole,
-        'dG_i1_tot': dG_i1_tot,
-        'dG_i3_tot': dG_i3_tot,
-        'dG_i4_tot': dG_i4_tot,
-        'dG_Ncap': dG_Ncap,
-        'dG_Ccap': dG_Ccap
-    }
-
-    return dG_Hel, dG_dict
+    return dG_N_dipole, dG_C_dipole
 
 
 def calc_K(dG_Hel: float, T: float = 5.0) -> float:
@@ -326,64 +295,156 @@ class AGADIR(object):
         self._method = method
         self._probability_fxn = self.lambdas[method]
 
-    def _calc_helical_propensity(self):
-        """
-        Calculate helical propensity based on the selected method.
-        """
-        result = self.result
-        result.Z_array = 1.0 + result.K_tot_array
-        result.Z = 1.0 + result.K_tot
-        result.helical_propensity = self._probability_fxn(result)
-        result.percent_helix = np.round(np.mean(result.helical_propensity),3)
-
     def _initialize_params(self):
         """
         Initialize parameters for energy calculations.
         """
-        result = self.result
-        seq = result.seq
+        seq = self.result.seq
 
         # get intrinsic energies
-        for i in range(0,len(seq)):
-            result.int_array[i] = get_dG_Int(seq[i])
+        for i in range(0, len(seq)):
+            self.result.int_array[i] = get_dG_Int(seq[i])
 
         # get i,i+1 energies (coulombic)
-        for i in range(0,len(seq)-1):
-            result.i1_array[i] = get_dG_i1(seq[i],seq[i+1])
+        for i in range(0, len(seq)-1):
+            self.result.i1_array[i] = get_dG_i1(seq[i], seq[i+1])
 
         # get i,i+3 energies (dG_SD)
-        for i in range(0,len(seq)-3):
-            result.i3_array[i] = get_dG_i3(seq[i],seq[i+3])
+        for i in range(0, len(seq)-3):
+            self.result.i3_array[i] = get_dG_i3(seq[i], seq[i+3])
 
         # get i,i+4 energies (dG_SD)
-        for i in range(0,len(seq)-4):
-            result.i4_array[i] = get_dG_i4(seq[i],seq[i+4])
+        for i in range(0, len(seq)-4):
+            self.result.i4_array[i] = get_dG_i4(seq[i], seq[i+4])
         
         # get Ncap energies
-        for i in range(0,len(seq)-5):
-            result.N_array[i] = get_dG_Ncap(seq[i:i+6])
+        for i in range(0, len(seq)-5):
+            self.result.N_array[i] = get_dG_Ncap(seq[i:i+6])
 
         # get Ccap energies
-        for i in range(5,len(seq)):
-            result.C_array[i] = get_dG_Ccap(seq[i])
+        for i in range(5, len(seq)):
+            self.result.C_array[i] = get_dG_Ccap(seq[i])
+
+    def _calc_dG_Hel(self, i: int, j: int) -> Tuple[float, Dict[str, float]]:
+        """
+        Calculate the Helix free energy and its components.
+
+        Args:
+            i (int): The start index of the helical segment.
+            j (int): The length of the helical segment.
+
+        Returns:
+            Tuple[float, Dict[str, float]]: The Helix free energy and its components.
+        """
+
+        # sum the intrinsic energies for the helical segment
+        dG_Int = sum(self.result.int_array[i:i + j])
+
+        # custom case when Pro at N+1
+        if self.result.seq[i + 1] == 'P':
+            dG_Int += (0.66 - 3.33)
+
+        # have to calculate dG_Hbond here because it is only relevant for helices
+        dG_Hbond = get_dG_Hbond(j)
+        
+        # sum side-chain interactions
+        dG_i1_tot = sum(self.result.i1_array[i:i + j - 1])
+        dG_i3_tot = sum(self.result.i3_array[i:i + j - 3])
+        dG_i4_tot = sum(self.result.i4_array[i:i + j - 4])
+        dG_SD = dG_i1_tot + dG_i3_tot + dG_i4_tot
+
+        # get capping energies
+        dG_Ncap = self.result.N_array[i]
+        dG_Ccap = self.result.C_array[i + j - 1]
+        dG_nonH = dG_Ncap + dG_Ccap
+
+        # sum dipole interactions
+        dG_N_dipole, dG_C_dipole = get_dG_dipole(self.result.seq[i:i + j])
+        dG_dipole = dG_N_dipole + dG_C_dipole
+
+        # sum all components
+        dG_Hel = dG_Int + dG_Hbond + dG_SD + dG_nonH + dG_dipole
+
+        dG_dict = {
+            'dG_Helix': dG_Hel,
+            'dG_Int': dG_Int,
+            'dG_Hbond': dG_Hbond,
+            'dG_SD': dG_SD,
+            'dG_nonH': dG_nonH,
+            'dG_dipole': dG_dipole,
+            'dG_N_dipole': dG_N_dipole,
+            'dG_C_dipole': dG_C_dipole,
+            'dG_i1_tot': dG_i1_tot,
+            'dG_i3_tot': dG_i3_tot,
+            'dG_i4_tot': dG_i4_tot,
+            'dG_Ncap': dG_Ncap,
+            'dG_Ccap': dG_Ccap
+        }
+
+        return dG_Hel, dG_dict
 
     def _calc_partition_fxn(self):
         """
         Calculate partition function for helical segments.
         """
-        result = self.result
-        seq    = self.result.seq
+        seq = self.result.seq
+
+        # n = len(seq)
+        # helical_content = np.zeros(n)
+
+        # # Calculate K_hel for all segments and store them
+        # K_hel_matrix = np.zeros((n, n))
+
+        # for j in range(6, n+1):  # Helical segment length
+        #     for i in range(0, n-j+1):  # Start index of the helical segment
+        #         segment_dG, _ = calc_dG_Hel(i, j, self.result)
+        #         K_hel_matrix[i, i+j-1] = calc_K(segment_dG, T=5.0)
+
+        # # Calculate the average helical content for each residue
+        # for x in range(n):
+        #     numerator_sum = 0.0
+        #     denominator_sum = 0.0
+
+        #     for j in range(6, n-x+1):
+        #         for i in range(max(0, x-j+1), x+1):
+        #             K_hel_ij = K_hel_matrix[i, i+j-1]
+        #             numerator_sum += K_hel_ij
+        #             denominator_sum += K_hel_ij * (j - abs(i - x))
+
+        #     helical_content[x] = numerator_sum / (1 + denominator_sum)
+
+        # self.result.helical_propensity = helical_content
+        # self.result.percent_helix = np.round(np.mean(helical_content), 3)
+
 
         n = len(seq)
-        for j in range(6,n+1): # helical segment lengths
-            for i in range(0,n-j+1): # helical segment positions
-                dG_Hel, dG_dict = calc_dG_Hel(i, j, result)
-                result.dG_dict_mat[j][i] = dG_dict
+        # for i in range(0, n-6): # helical segment positions
+        #     for j in range(6, n-i-1): # helical segment lengths
+        for j in range(6, n+1): # helical segment lengths
+            for i in range(0, n-j+1): # helical segment positions
+                # print(i, i+j)
+
+                # calculate dG_Hel and dG_dict
+                dG_Hel, dG_dict = self._calc_dG_Hel(i, j)
+                self.result.dG_dict_mat[j][i] = dG_dict
+
+                # calculate K
                 K = calc_K(dG_Hel)
-                result.K_tot_array[i:i+j] += K # method='r'
-                result.K_tot += K # method='1s'
+
+                self.result.K_tot_array[i:i+j] += K # method='r'
+                self.result.K_tot += K # method='1s'
 
         # if method='ms' (custom calculation here with result.dG_dict_mat)
+
+    def _calc_helical_propensity(self):
+        """
+        Calculate helical propensity based on the selected method.
+        """
+        self.result.Z_array = 1.0 + self.result.K_tot_array
+        self.result.Z = 1.0 + self.result.K_tot
+
+        self.result.helical_propensity = self._probability_fxn(self.result)
+        self.result.percent_helix = np.round(np.mean(self.result.helical_propensity), 3)
 
     def predict(self, seq: str) -> ModelResult:
         """
@@ -395,11 +456,11 @@ class AGADIR(object):
         Returns:
             ModelResult: Object containing the predicted helical propensity.
         """
-        result = self.result = ModelResult(seq)
+        self.result = ModelResult(seq)
         self._initialize_params()
         self._calc_partition_fxn()
         self._calc_helical_propensity()
-        return result
+        return self.result
 
 if __name__ == "__main__":
     pass
