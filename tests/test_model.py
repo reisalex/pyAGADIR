@@ -228,3 +228,51 @@ def test_paper_data_figure_4C():
         model = AGADIR(method='r')
         result = model.predict(pept)
         assert abs(result.get_percent_helix()*100 - y_vals_fig_4C_r[i]) < 3.0, f"predicted: {result.get_percent_helix()*100}, expected: {y_vals_fig_4C_r[i]}, {pept}"
+
+
+
+def test_paper_2_table_1():
+    """Data from
+    https://doi.org/10.1006/jmbi.1994.0023
+    """
+    # CheY2
+    pept='EDGVDALNKLQAGGY'
+    pred=4
+    model = AGADIR(method='1s', T=4.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < 3.0, f"predicted: {result.get_percent_helix()*100}, expected: {pred}, {pept}"
+
+    #CheY2-Mo
+    pept='EDAVEALRKLQAGGY'
+    pred=40
+    model = AGADIR(method='1s', T=4.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < 3.0, f"predicted: {result.get_percent_helix()*100}, expected: {pred}, {pept}"
+
+    # CheY5
+    pept='AATLEEKLNKIFEKLGMY'
+    pred=7
+    model = AGADIR(method='1s', T=4.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < 3.0, f"predicted: {result.get_percent_helix()*100}, expected: {pred}, {pept}"
+
+    # CheY5-Mo
+    pept='AATLAEKLAKILEKLGGY'
+    pred=20
+    model = AGADIR(method='1s', T=4.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < 3.0, f"predicted: {result.get_percent_helix()*100}, expected: {pred}, {pept}"
+
+    # SH3Lo
+    pept='DYQEKSPREVAMKKG'
+    pred=2
+    model = AGADIR(method='1s', T=4.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < 3.0, f"predicted: {result.get_percent_helix()*100}, expected: {pred}, {pept}"
+
+    # Sh3Lo-Mo
+    pept='TYQEKAAREVAMKKG'
+    pred=15
+    model = AGADIR(method='1s', T=4.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < 3.0, f"predicted: {result.get_percent_helix()*100}, expected: {pred}, {pept}"
