@@ -60,7 +60,7 @@ class ModelResult(object):
         self.N_array = np.zeros(len(seq))
         self.C_array = np.zeros(len(seq))
         n = len(seq)
-        self.dG_dict_mat = [None for j in range(6)] + [[None for _ in range(0, n - j + 1)] for j in range(6, n + 1)]
+        self.dG_dict_mat = [None for j in range(5)] + [[None for _ in range(0, n - j)] for j in range(5, n)]
         self.K_tot = 0.0
         self.K_tot_array = np.zeros(len(seq))
         self.Z = 0.0
@@ -108,6 +108,7 @@ def get_dG_Int(AA: str) -> float:
     """
     return table2.loc[AA, 'Intrinsic']
 
+
 def get_dG_Hbond(j: int) -> float:
     """
     Get the free energy contribution for hydrogen bonding.
@@ -119,7 +120,8 @@ def get_dG_Hbond(j: int) -> float:
         float: The free energy contribution.
     """
     dG_Hbond = -0.775
-    return dG_Hbond * max((j - 4), 0)
+    return dG_Hbond * max((j - 6), 0) # A helix of 6 has two caps and four residues in the helix. The first 4 are considered to have zero net enthalpy.
+
 
 def get_dG_i1(AAi: str, AAi1: str) -> float:
     """
@@ -143,6 +145,7 @@ def get_dG_i1(AAi: str, AAi1: str) -> float:
     else:
         return 0.05 * charge
 
+
 def get_dG_i3(AAi: str, AAi3: str) -> float:
     """
     Get the free energy contribution for interaction between AAi and AAi3.
@@ -155,6 +158,7 @@ def get_dG_i3(AAi: str, AAi3: str) -> float:
         float: The free energy contribution.
     """
     return table4a.loc[AAi, AAi3]
+
 
 def get_dG_i4(AAi: str, AAi4: str) -> float:
     """
@@ -169,6 +173,7 @@ def get_dG_i4(AAi: str, AAi4: str) -> float:
     """
     return table4b.loc[AAi, AAi4]
 
+
 def get_dG_Ncap(seq: str) -> float:
     """
     Get the free energy contribution for N-terminal capping.
@@ -179,31 +184,47 @@ def get_dG_Ncap(seq: str) -> float:
     Returns:
         float: The free energy contribution.
     """
+    # Get the Ncap residue
     Ncap = seq[0]
+
+    # initialize dG_Ncap
+    dG_Ncap = table2.loc[Ncap, 'N_cap']
 
     # possible formation for capping box
     # when Glu (E) at N+3 (Harper & Rose, 1993;
     # Dasgupta & Bell, 1993)
-    if seq[3] in ['E', 'Q', 'D']:
+    if seq[3] in ['E']:
+        # AAAEAA should take us here but no farther
         dG_Ncap = table2.loc[Ncap, 'Capp_box']
-
-        # Other capping box options:
-        # Gln (Q) or Asp (D)
-        if seq[3] in ['Q', 'D'] and dG_Ncap < 0.0:
-            dG_Ncap *= 0.625
 
         # special capping box case
         # when there is a Pro (P) at N+1
         if seq[1] == 'P':
+            # APAEAA should take us here
             dG_Ncap += table2.loc[Ncap, 'Pro_N1']
-    else:
-        dG_Ncap = table2.loc[Ncap, 'N_cap']
 
-    # Asp (D) + 2 special hydrogen bond
+    # Other capping box options:
+    # Gln (Q) or Asp (D)
+    elif seq[3] in ['Q', 'D']:
+        # AAADAA and AAAQAA should take us here but no farther
+        dG_Ncap = table2.loc[Ncap, 'Capp_box']
+
+        # multiply negative values by 0.625   ----- But why? I thought this was supposed to provide stability, not reduce it.
+        if dG_Ncap < 0.0:
+            dG_Ncap *= 0.625
+
+        # special capping box case
+        # when there is a Pro (P) at N+1
+        if seq[1] == 'P' and dG_Ncap < 0.0:
+            # APADAA and APAQAA should take us here
+            # multiply negative values by 0.625   ----- But why? I thought this was supposed to provide stability, not reduce it.
+            dG_Ncap *= 0.625
+
+    # Asp (D) + 2 special hydrogen bond, can be used to stabilize N-cap region
     # (Bell et al., 1992; Dasgurpta & Bell, 1993)
-    if seq[2] == 'D':
-        dG_Ncap = min(table2.loc[Ncap, 'Asp_2'], dG_Ncap)
-        # only update if more negative
+    if seq[2] == 'D' and dG_Ncap > 0.0:  # should I instead take the lowest value?
+        dG_Ncap = table2.loc[Ncap, 'Asp_2']
+        # only update if there is "no favorable" Ncap residue ----- What does this mean?
         # (Pro N+1 is sometimes more stabilizing)
 
     return dG_Ncap
@@ -221,9 +242,13 @@ def get_dG_Ccap(AA: str) -> float:
     """
     return table2.loc[AA, 'C_cap']
 
+
 def get_dG_dipole(seq: str) -> float:
     """
     Calculate the dipole free energy contribution.
+    The nomenclature is that of Richardson & Richardson (1988),
+    which is different from the one used in the AGADIR paper.
+    Richardson considers the first and last helical residues as the caps.
 
     Args:
         seq (str): The amino acid sequence.
@@ -249,13 +274,13 @@ def get_dG_dipole(seq: str) -> float:
     return dG_N_dipole, dG_C_dipole
 
 
-def calc_K(dG_Hel: float, T: float = 5.0) -> float:
+def calc_K(dG_Hel: float, T: float=4.0) -> float:
     """
     Calculate the equilibrium constant K.
 
     Args:
         dG_Hel (float): The Helix free energy.
-        T (float, optional): Temperature in Celsius. Defaults to 5.0.
+        T (float): Temperature in Celsius. Default is 4.0.
 
     Returns:
         float: The equilibrium constant K.
@@ -277,7 +302,7 @@ class AGADIR(object):
         '1s': lambda result: result.K_tot_array / result.Z
     }
 
-    def __init__(self, method: str = '1s'):
+    def __init__(self, method: str = '1s', T: float=4.0):
         """
         Initialize AGADIR object.
 
@@ -285,6 +310,7 @@ class AGADIR(object):
             method (str): Method for calculating helical propensity. Must be one of ['r','1s'].
                 'r' : Residue partition function.
                 '1s': One-sequence approximation.
+            T (float): Temperature in Celsius. Default is 4.0.
         """
         if method not in self.method_options:
             raise ValueError("Method provided must be one of ['r','1s']; \
@@ -294,6 +320,11 @@ class AGADIR(object):
             ")
         self._method = method
         self._probability_fxn = self.lambdas[method]
+        self.T = T
+
+        self.has_acetyl = False
+        self.has_succinyl = False
+        self.has_amide = False
 
     def _initialize_params(self):
         """
@@ -338,32 +369,49 @@ class AGADIR(object):
         """
 
         # sum the intrinsic energies for the helical segment
-        dG_Int = sum(self.result.int_array[i:i + j])
+        dG_Int = sum(self.result.int_array[i+1:i + j - 1]) # don't include caps
 
-        # custom case when Pro at N+1
-        if self.result.seq[i + 1] == 'P':
-            dG_Int += (0.66 - 3.33)
+        # # custom case when Pro at N+1
+        # if self.result.seq[i + 1] == 'P':
+        #     dG_Int += (0.66 - 3.33)
 
         # have to calculate dG_Hbond here because it is only relevant for helices
         dG_Hbond = get_dG_Hbond(j)
         
         # sum side-chain interactions
-        dG_i1_tot = sum(self.result.i1_array[i:i + j - 1])
-        dG_i3_tot = sum(self.result.i3_array[i:i + j - 3])
-        dG_i4_tot = sum(self.result.i4_array[i:i + j - 4])
+        dG_i1_tot = sum(self.result.i1_array[i+1:i + j - 1 - 1]) # don't include caps
+        dG_i3_tot = sum(self.result.i3_array[i+1:i + j - 1 - 3]) # don't include caps
+        dG_i4_tot = sum(self.result.i4_array[i+1:i + j - 1 - 4]) # don't include caps
         dG_SD = dG_i1_tot + dG_i3_tot + dG_i4_tot
 
         # get capping energies
-        dG_Ncap = self.result.N_array[i]
-        dG_Ccap = self.result.C_array[i + j - 1]
+        dG_Ncap = self.result.N_array[i] # use only caps
+        dG_Ccap = self.result.C_array[i + j - 1] # use only caps
         dG_nonH = dG_Ncap + dG_Ccap
 
         # sum dipole interactions
-        dG_N_dipole, dG_C_dipole = get_dG_dipole(self.result.seq[i:i + j])
+        dG_N_dipole, dG_C_dipole = get_dG_dipole(self.result.seq[i+1:i + j - 1]) # caps are NOT needed, the nomenclature is that of Richardson & Richardson (1988).
         dG_dipole = dG_N_dipole + dG_C_dipole
 
         # sum all components
         dG_Hel = dG_Int + dG_Hbond + dG_SD + dG_nonH + dG_dipole
+
+        # add acetylation and amidation, if present
+        if i == 0 and self.has_acetyl:
+            dG_Hel += -1.275
+            if self.result.seq[0] == 'A':
+                dG_Hel += -0.1
+
+        elif i == 0 and self.has_succinyl:
+            dG_Hel += -1.775
+            if self.result.seq[0] == 'A':
+                dG_Hel += -0.1
+
+        if i + j == len(self.result.seq) and self.has_amide:
+            print('here')
+            dG_Hel += -0.81
+            if self.result.seq[-1] == 'A':
+                dG_Hel += -0.1
 
         dG_dict = {
             'dG_Helix': dG_Hel,
@@ -389,49 +437,19 @@ class AGADIR(object):
         """
         seq = self.result.seq
 
-        # n = len(seq)
-        # helical_content = np.zeros(n)
-
-        # # Calculate K_hel for all segments and store them
-        # K_hel_matrix = np.zeros((n, n))
-
-        # for j in range(6, n+1):  # Helical segment length
-        #     for i in range(0, n-j+1):  # Start index of the helical segment
-        #         segment_dG, _ = calc_dG_Hel(i, j, self.result)
-        #         K_hel_matrix[i, i+j-1] = calc_K(segment_dG, T=5.0)
-
-        # # Calculate the average helical content for each residue
-        # for x in range(n):
-        #     numerator_sum = 0.0
-        #     denominator_sum = 0.0
-
-        #     for j in range(6, n-x+1):
-        #         for i in range(max(0, x-j+1), x+1):
-        #             K_hel_ij = K_hel_matrix[i, i+j-1]
-        #             numerator_sum += K_hel_ij
-        #             denominator_sum += K_hel_ij * (j - abs(i - x))
-
-        #     helical_content[x] = numerator_sum / (1 + denominator_sum)
-
-        # self.result.helical_propensity = helical_content
-        # self.result.percent_helix = np.round(np.mean(helical_content), 3)
-
-
         n = len(seq)
-        # for i in range(0, n-6): # helical segment positions
-        #     for j in range(6, n-i-1): # helical segment lengths
-        for j in range(6, n+1): # helical segment lengths
+        for j in range(6, n+1): # helix lengths (including caps)
             for i in range(0, n-j+1): # helical segment positions
-                # print(i, i+j)
+                # print(i, j, i+j)
 
                 # calculate dG_Hel and dG_dict
                 dG_Hel, dG_dict = self._calc_dG_Hel(i, j)
-                self.result.dG_dict_mat[j][i] = dG_dict
+                self.result.dG_dict_mat[j-1][i] = dG_dict
 
                 # calculate K
-                K = calc_K(dG_Hel)
+                K = calc_K(dG_Hel, self.T)
 
-                self.result.K_tot_array[i:i+j] += K # method='r'
+                self.result.K_tot_array[i+1:i+j-1] += K # method='r', by definition helical region does not include caps
                 self.result.K_tot += K # method='1s'
 
         # if method='ms' (custom calculation here with result.dG_dict_mat)
@@ -456,6 +474,30 @@ class AGADIR(object):
         Returns:
             ModelResult: Object containing the predicted helical propensity.
         """
+        if not isinstance(seq, str):
+            raise ValueError("Input sequence must be a string.")
+        
+        seq = seq.upper()
+        
+        if len(seq) < 6:
+            raise ValueError("Input sequence must be at least 6 amino acids long.")
+        
+        # check for acylation and amidation
+        if seq[0] == 'Z':
+            self.has_acetyl = True
+            seq = seq[1:]
+
+        elif seq[0] == 'X':
+            self.has_succinyl = True
+            seq = seq[1:]
+
+        if seq[-1] == 'B':
+            self.has_amide = True
+            seq = seq[:-1]
+
+        if not set(list(seq)) <= set(list('ACDEFGHIKLMNPQRSTVWY')):
+            raise ValueError('Parameter `seq` should contain only natural amino acids: ACDEFGHIKLMNPQRSTVWY.')
+
         self.result = ModelResult(seq)
         self._initialize_params()
         self._calc_partition_fxn()
