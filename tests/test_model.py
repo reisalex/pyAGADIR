@@ -125,7 +125,7 @@ def test_paper_data_figure_3():
     # The peptide sequences come from Table 1 in https://doi.org/10.1002/pro.5560021006 (with original data in Fig 1B)
     # Represent Acetyl with Z, succinyl with X, and amide with B
     # Data originally from huyghues-despointes et al. (1993)
-    
+
     peptides = ['ZDAQAAAAQAAAAQAAYB',
                 'ZADQAAAAQAAAAQAAYB',
                 'ZAAQDAAAQAAAAQAAYB',
@@ -139,9 +139,9 @@ def test_paper_data_figure_3():
     tol = 3.0
 
     for i, pept in enumerate(peptides):
-        model = AGADIR(method='1s')
+        model = AGADIR(method='1s', T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_3[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_3[i]}, {pept}"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_3[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_3[i]}, {pept}, method: 1s"
 
 
 # test using data from papers
@@ -165,14 +165,14 @@ def test_paper_data_figure_4A():
     tol = 3.0
 
     for i, pept in enumerate(peptides_fig_4A):
-        model = AGADIR(method='1s')
+        model = AGADIR(method='1s', T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_4A[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4A[i]}, {pept}"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4A[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4A[i]}, {pept}, method: 1s"
 
     for i, pept in enumerate(peptides_fig_4A):
-        model = AGADIR(method='r')
+        model = AGADIR(method='r', T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_4A[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4A[i]}, {pept}"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4A[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4A[i]}, {pept}, method: r"
 
 
 def test_paper_data_figure_4B():
@@ -203,12 +203,12 @@ def test_paper_data_figure_4B():
     tol = 3.0
 
     for i, pept in enumerate(peptides_fig_4B):
-        model = AGADIR(method='1s')
+        model = AGADIR(method='1s', T=4.0)
         result = model.predict(pept)
         assert abs(result.get_percent_helix()*100 - y_vals_fig_4B_1s[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4B_1s[i]}, {pept}, method: 1s"
 
     for i, pept in enumerate(peptides_fig_4B):
-        model = AGADIR(method='r')
+        model = AGADIR(method='r', T=4.0)
         result = model.predict(pept)
         assert abs(result.get_percent_helix()*100 - y_vals_fig_4B_r[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4B_r[i]}, {pept}, method: r"
 
@@ -238,20 +238,22 @@ def test_paper_data_figure_4C():
     tol = 3.0
 
     for i, pept in enumerate(peptides_fig_4C):
-        model = AGADIR(method='1s')
+        model = AGADIR(method='1s', T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_4C_1s[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4C_1s[i]}, {pept}"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4C_1s[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4C_1s[i]}, {pept}, method: 1s"
 
     for i, pept in enumerate(peptides_fig_4C):
-        model = AGADIR(method='r')
+        model = AGADIR(method='r', T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_4C_r[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4C_r[i]}, {pept}"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4C_r[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4C_r[i]}, {pept}, method: r"
 
 
 
-def test_paper_2_table_1():
+def test_paper_2_table_1_CheY2():
     """Data from
     https://doi.org/10.1006/jmbi.1994.0023
+
+    The values are approximate, expect some error.
     """
 
     tol = 3.0
@@ -261,39 +263,179 @@ def test_paper_2_table_1():
     pred=4
     model = AGADIR(method='1s', T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
 
     #CheY2-Mo
     pept='EDAVEALRKLQAGGY'
     pred=40
     model = AGADIR(method='1s', T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+
+
+def test_paper_2_table_1_CheY5():
+    """Data from
+    https://doi.org/10.1006/jmbi.1994.0023
+
+    The values are approximate, expect some error.
+    """
+
+    tol = 3.0
 
     # CheY5
     pept='AATLEEKLNKIFEKLGMY'
     pred=7
     model = AGADIR(method='1s', T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
 
     # CheY5-Mo
     pept='AATLAEKLAKILEKLGGY'
     pred=20
     model = AGADIR(method='1s', T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+
+
+def test_paper_2_table_1_SH3Lo():
+    """Data from
+    https://doi.org/10.1006/jmbi.1994.0023
+
+    The values are approximate, expect some error.
+    """
+
+    tol = 3.0
 
     # SH3Lo
     pept='DYQEKSPREVAMKKG'
     pred=2
     model = AGADIR(method='1s', T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
 
     # Sh3Lo-Mo
     pept='TYQEKAAREVAMKKG'
     pred=15
     model = AGADIR(method='1s', T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+
+
+def test_paper_3_figure_2A():
+    """Data from
+    https://doi.org/10.1006/jmbi.1994.0024
+    
+    Only used first data point, triangles.
+    The values are approximate, expect some error.
+    """
+    tol = 3.0
+    pept = 'ZAAQAAAAQAAAAQAAYB'
+    pred = 44.1
+    model = AGADIR(method='1s', T=0.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+
+
+def test_paper_3_figure_2B():
+    """Data from
+    https://doi.org/10.1006/jmbi.1994.0024
+    
+    Only used first data point, triangles.
+    The values are approximate, expect some error.
+    """
+    tol = 3.0
+    pept = 'ZAAAAKAAAAKAAAAKAB'
+    pred = 61.8
+    model = AGADIR(method='1s', T=0.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+
+
+def test_paper_3_figure_2C():
+    """Data from
+    https://doi.org/10.1006/jmbi.1994.0024
+    
+    Only used first data point, triangles.
+    The values are approximate, expect some error.
+    """
+    tol = 3.0
+    pept = 'ZAEAAAKEAAAKEAAAKAB'
+    pred = 90.6
+    model = AGADIR(method='1s', T=0.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+
+
+def test_paper_3_figure_2D():
+    """Data from
+    https://doi.org/10.1006/jmbi.1994.0024
+    
+    Only used first data point, triangles.
+    The values are approximate, expect some error.
+    """
+    tol = 3.0
+    pept = 'ZWDAAAKDAAAKDAAAKAB'
+    pred = 65.0
+    model = AGADIR(method='1s', T=0.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+
+
+def test_paper_3_figure_2E():
+    """Data from
+    https://doi.org/10.1006/jmbi.1994.0024
+    
+    Only used first data point, triangles.
+    The values are approximate, expect some error.
+    """
+    tol = 3.0
+    pept = 'ZEAEKAAKEAEKAAKEAEKB'
+    pred = 56.4
+    model = AGADIR(method='1s', T=4.0) # yes, this one is 4.0, not 0.0
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+
+
+def test_paper_3_figure_3A():
+    """Data from
+    https://doi.org/10.1006/jmbi.1994.0024
+    
+    Only used first data point, triangles.
+    The values are approximate, expect some error.
+    """
+    tol = 3.0
+    pept = 'ZGADAQGAMNKALELFRKDIAAKYKELGB'
+    pred = 37.4
+    model = AGADIR(method='1s', T=0.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+
+
+def test_paper_3_figure_3B():
+    """Data from
+    https://doi.org/10.1006/jmbi.1994.0024
+    
+    Only used first data point, triangles.
+    The values are approximate, expect some error.
+    """
+    tol = 3.0
+    pept = 'KDESYEELLRKTKAELLHWTKELTEEEKKALAEEGKITB'
+    pred = 19.9
+    model = AGADIR(method='1s', T=2.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+
+
+def test_paper_3_figure_3C():
+    """Data from
+    https://doi.org/10.1006/jmbi.1994.0024
+    
+    Only used first data point, triangles.
+    The values are approximate, expect some error.
+    """
+    tol = 3.0
+    pept = 'EDAVEALRKLQAGGY'
+    pred = 39.0
+    model = AGADIR(method='1s', T=5.0)
+    result = model.predict(pept)
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
