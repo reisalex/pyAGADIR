@@ -119,8 +119,10 @@ def get_dG_Hbond(j: int) -> float:
     Returns:
         float: The free energy contribution.
     """
+    # A helix of 6 has two caps and four residues in the helix. 
+    # The first 4 are considered to have zero net enthalpy and caps don't count.
     dG_Hbond = -0.775
-    return dG_Hbond * max((j - 6), 0) # A helix of 6 has two caps and four residues in the helix. The first 4 are considered to have zero net enthalpy.
+    return dG_Hbond * max((j - 6), 0) 
 
 
 def get_dG_i1(AAi: str, AAi1: str) -> float:
@@ -196,22 +198,26 @@ def get_dG_Ncap(seq: str) -> float:
     if seq[3] in ['E']:
         # AAAEAA should take us here but no farther
         dG_Ncap = table2.loc[Ncap, 'Capp_box']
+        print('case 1')
 
         # special capping box case
         # when there is a Pro (P) at N+1
         if seq[1] == 'P':
             # APAEAA should take us here
             dG_Ncap += table2.loc[Ncap, 'Pro_N1']
+            print('case 2')
 
     # Other capping box options:
     # Gln (Q) or Asp (D)
     elif seq[3] in ['Q', 'D']:
         # AAADAA and AAAQAA should take us here but no farther
         dG_Ncap = table2.loc[Ncap, 'Capp_box']
+        print('case 3')
 
         # multiply negative values by 0.625   ----- But why? I thought this was supposed to provide stability, not reduce it.
         if dG_Ncap < 0.0:
             dG_Ncap *= 0.625
+            print('case 4')
 
         # special capping box case
         # when there is a Pro (P) at N+1
@@ -219,6 +225,7 @@ def get_dG_Ncap(seq: str) -> float:
             # APADAA and APAQAA should take us here
             # multiply negative values by 0.625   ----- But why? I thought this was supposed to provide stability, not reduce it.
             dG_Ncap *= 0.625
+            print('case 5')
 
     # Asp (D) + 2 special hydrogen bond, can be used to stabilize N-cap region
     # (Bell et al., 1992; Dasgurpta & Bell, 1993)
@@ -226,6 +233,7 @@ def get_dG_Ncap(seq: str) -> float:
         dG_Ncap = table2.loc[Ncap, 'Asp_2']
         # only update if there is "no favorable" Ncap residue ----- What does this mean?
         # (Pro N+1 is sometimes more stabilizing)
+        print('case 6')
 
     return dG_Ncap
 
@@ -387,6 +395,24 @@ class AGADIR(object):
         # get capping energies
         dG_Ncap = self.result.N_array[i] # use only caps
         dG_Ccap = self.result.C_array[i + j - 1] # use only caps
+
+        # add acetylation and amidation, if present
+        if i == 0 and self.has_acetyl is True:
+            dG_Ncap += -1.275
+            if self.result.seq[0] == 'A':
+                dG_Ncap += -0.1
+
+        elif i == 0 and self.has_succinyl is True:
+            dG_Ncap += -1.775
+            if self.result.seq[0] == 'A':
+                dG_Ncap += -0.1
+
+        if i + j == len(self.result.seq) and self.has_amide is True:
+            dG_Ccap += -0.81
+            if self.result.seq[-1] == 'A':
+                dG_Ccap += -0.1
+
+        # sum non-hydrogen bond interactions
         dG_nonH = dG_Ncap + dG_Ccap
 
         # sum dipole interactions
@@ -395,23 +421,6 @@ class AGADIR(object):
 
         # sum all components
         dG_Hel = dG_Int + dG_Hbond + dG_SD + dG_nonH + dG_dipole
-
-        # add acetylation and amidation, if present
-        if i == 0 and self.has_acetyl:
-            dG_Hel += -1.275
-            if self.result.seq[0] == 'A':
-                dG_Hel += -0.1
-
-        elif i == 0 and self.has_succinyl:
-            dG_Hel += -1.775
-            if self.result.seq[0] == 'A':
-                dG_Hel += -0.1
-
-        if i + j == len(self.result.seq) and self.has_amide:
-            print('here')
-            dG_Hel += -0.81
-            if self.result.seq[-1] == 'A':
-                dG_Hel += -0.1
 
         dG_dict = {
             'dG_Helix': dG_Hel,
