@@ -48,9 +48,9 @@ def test_bad_input():
 #         model = AGADIR(method='XYZ')
     
 #     # test good inputs
-#     model = AGADIR(method='r')
+#     model = AGADIR(method=method)
 #     assert isinstance(model, AGADIR)
-#     model = AGADIR(method='1s') # this is the default
+#     model = AGADIR(method=method) # this is the default
 #     assert isinstance(model, AGADIR)
 
 #     # test prediction
@@ -139,9 +139,10 @@ def test_paper_data_figure_3():
     tol = 3.0
 
     for i, pept in enumerate(peptides):
-        model = AGADIR(method='1s', T=4.0)
+        method = '1s'
+        model = AGADIR(method=method, T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_3[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_3[i]}, {pept}, method: 1s"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_3[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_3[i]}, {pept}, method: {method}"
 
 
 # test using data from papers
@@ -165,14 +166,16 @@ def test_paper_data_figure_4A():
     tol = 3.0
 
     for i, pept in enumerate(peptides_fig_4A):
-        model = AGADIR(method='1s', T=4.0)
+        method = '1s'
+        model = AGADIR(method=method, T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_4A[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4A[i]}, {pept}, method: 1s"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4A[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4A[i]}, {pept}, method: {method}"
 
     for i, pept in enumerate(peptides_fig_4A):
-        model = AGADIR(method='r', T=4.0)
+        method = 'r'
+        model = AGADIR(method=method, T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_4A[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4A[i]}, {pept}, method: r"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4A[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4A[i]}, {pept}, method: {method}"
 
 
 def test_paper_data_figure_4B():
@@ -203,14 +206,16 @@ def test_paper_data_figure_4B():
     tol = 3.0
 
     for i, pept in enumerate(peptides_fig_4B):
-        model = AGADIR(method='1s', T=4.0)
+        method = '1s'
+        model = AGADIR(method=method, T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_4B_1s[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4B_1s[i]}, {pept}, method: 1s"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4B_1s[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4B_1s[i]}, {pept}, method: {method}"
 
     for i, pept in enumerate(peptides_fig_4B):
-        model = AGADIR(method='r', T=4.0)
+        method = 'r'
+        model = AGADIR(method=method, T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_4B_r[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4B_r[i]}, {pept}, method: r"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4B_r[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4B_r[i]}, {pept}, method: {method}"
 
 
 def test_paper_data_figure_4C():
@@ -238,14 +243,16 @@ def test_paper_data_figure_4C():
     tol = 3.0
 
     for i, pept in enumerate(peptides_fig_4C):
-        model = AGADIR(method='1s', T=4.0)
+        method = '1s'
+        model = AGADIR(method=method, T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_4C_1s[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4C_1s[i]}, {pept}, method: 1s"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4C_1s[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4C_1s[i]}, {pept}, method: {method}"
 
     for i, pept in enumerate(peptides_fig_4C):
-        model = AGADIR(method='r', T=4.0)
+        method = 'r'
+        model = AGADIR(method=method, T=4.0)
         result = model.predict(pept)
-        assert abs(result.get_percent_helix()*100 - y_vals_fig_4C_r[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4C_r[i]}, {pept}, method: r"
+        assert abs(result.get_percent_helix()*100 - y_vals_fig_4C_r[i]) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {y_vals_fig_4C_r[i]}, {pept}, method: {method}"
 
 
 
@@ -259,18 +266,20 @@ def test_paper_2_table_1_CheY2():
     tol = 3.0
 
     # CheY2
-    pept='EDGVDALNKLQAGGY'
-    pred=4
-    model = AGADIR(method='1s', T=4.0)
+    pept = 'EDGVDALNKLQAGGY'
+    pred = 4
+    method = '1s'
+    model = AGADIR(method=method, T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
     #CheY2-Mo
-    pept='EDAVEALRKLQAGGY'
-    pred=40
-    model = AGADIR(method='1s', T=4.0)
+    pept = 'EDAVEALRKLQAGGY'
+    pred = 40
+    method = '1s'
+    model = AGADIR(method=method, T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
 
 def test_paper_2_table_1_CheY5():
@@ -283,18 +292,20 @@ def test_paper_2_table_1_CheY5():
     tol = 3.0
 
     # CheY5
-    pept='AATLEEKLNKIFEKLGMY'
-    pred=7
-    model = AGADIR(method='1s', T=4.0)
+    pept = 'AATLEEKLNKIFEKLGMY'
+    pred = 7
+    method = '1s'
+    model = AGADIR(method=method, T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
     # CheY5-Mo
-    pept='AATLAEKLAKILEKLGGY'
-    pred=20
-    model = AGADIR(method='1s', T=4.0)
+    pept = 'AATLAEKLAKILEKLGGY'
+    pred = 20
+    method = '1s'
+    model = AGADIR(method=method, T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
 
 def test_paper_2_table_1_SH3Lo():
@@ -307,18 +318,20 @@ def test_paper_2_table_1_SH3Lo():
     tol = 3.0
 
     # SH3Lo
-    pept='DYQEKSPREVAMKKG'
-    pred=2
-    model = AGADIR(method='1s', T=4.0)
+    pept = 'DYQEKSPREVAMKKG'
+    pred = 2
+    method = '1s'
+    model = AGADIR(method=method, T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
     # Sh3Lo-Mo
     pept='TYQEKAAREVAMKKG'
     pred=15
-    model = AGADIR(method='1s', T=4.0)
+    method = '1s'
+    model = AGADIR(method=method, T=4.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
 
 def test_paper_3_figure_2A():
@@ -331,9 +344,10 @@ def test_paper_3_figure_2A():
     tol = 3.0
     pept = 'ZAAQAAAAQAAAAQAAYB'
     pred = 44.1
-    model = AGADIR(method='1s', T=0.0)
+    method = '1s'
+    model = AGADIR(method=method, T=0.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
 
 def test_paper_3_figure_2B():
@@ -346,9 +360,10 @@ def test_paper_3_figure_2B():
     tol = 3.0
     pept = 'ZAAAAKAAAAKAAAAKAB'
     pred = 61.8
-    model = AGADIR(method='1s', T=0.0)
+    method = '1s'
+    model = AGADIR(method=method, T=0.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
 
 def test_paper_3_figure_2C():
@@ -361,9 +376,10 @@ def test_paper_3_figure_2C():
     tol = 3.0
     pept = 'ZAEAAAKEAAAKEAAAKAB'
     pred = 90.6
-    model = AGADIR(method='1s', T=0.0)
+    method = '1s'
+    model = AGADIR(method=method, T=0.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
 
 def test_paper_3_figure_2D():
@@ -376,9 +392,10 @@ def test_paper_3_figure_2D():
     tol = 3.0
     pept = 'ZWDAAAKDAAAKDAAAKAB'
     pred = 65.0
-    model = AGADIR(method='1s', T=0.0)
+    method = '1s'
+    model = AGADIR(method=method, T=0.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
 
 def test_paper_3_figure_2E():
@@ -391,9 +408,10 @@ def test_paper_3_figure_2E():
     tol = 3.0
     pept = 'ZEAEKAAKEAEKAAKEAEKB'
     pred = 56.4
-    model = AGADIR(method='1s', T=4.0) # yes, this one is 4.0, not 0.0
+    method = '1s'
+    model = AGADIR(method=method, T=4.0) # yes, this one is 4.0, not 0.0
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
 
 def test_paper_3_figure_3A():
@@ -406,9 +424,10 @@ def test_paper_3_figure_3A():
     tol = 3.0
     pept = 'ZGADAQGAMNKALELFRKDIAAKYKELGB'
     pred = 37.4
-    model = AGADIR(method='1s', T=0.0)
+    method = '1s'
+    model = AGADIR(method=method, T=0.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
 
 def test_paper_3_figure_3B():
@@ -421,9 +440,10 @@ def test_paper_3_figure_3B():
     tol = 3.0
     pept = 'KDESYEELLRKTKAELLHWTKELTEEEKKALAEEGKITB'
     pred = 19.9
-    model = AGADIR(method='1s', T=2.0)
+    method = '1s'
+    model = AGADIR(method=method, T=2.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
 
 
 def test_paper_3_figure_3C():
@@ -436,6 +456,7 @@ def test_paper_3_figure_3C():
     tol = 3.0
     pept = 'EDAVEALRKLQAGGY'
     pred = 39.0
-    model = AGADIR(method='1s', T=5.0)
+    method = '1s'
+    model = AGADIR(method=method, T=5.0)
     result = model.predict(pept)
-    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: 1s"
+    assert abs(result.get_percent_helix()*100 - pred) < tol, f"predicted: {round(result.get_percent_helix()*100, 1)}, expected: {pred}, {pept}, method: {method}"
