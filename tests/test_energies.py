@@ -196,13 +196,13 @@ def test_dG_Hbond():
     """
     pept = 'AAAAAAAAAAH'
     h_energy = get_dG_Hbond(len(pept))
-    assert h_energy == -0.775 * max((len(pept) - 4), 0)
+    assert h_energy == -0.775 * max((len(pept) - 6), 0)
 
     pept = 'AAAAH'
     h_energy = get_dG_Hbond(len(pept))
-    assert h_energy == -0.775 * max((len(pept) - 4), 0)
+    assert h_energy == -0.775 * max((len(pept) - 6), 0)
 
     pept = 'AAH'
     h_energy = get_dG_Hbond(len(pept))
-    assert h_energy == -0.775 * max((len(pept) - 4), 0)
+    assert h_energy == -0.775 * max((len(pept) - 6), 0)
 
