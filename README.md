@@ -1,4 +1,4 @@
-# α-helix probability model (AGADIR)
+# α-helix probability model implemented in Python (pyAGADIR)
 
 An open-source, Python implementation of Munoz & Serrano's AGADIR model of α-helix formation. This model uses statistical mechanics and energy parameters trained on a database of over 400 peptides to predict the α-helical tendency (probability) per residue for a given peptide (see references).
 
