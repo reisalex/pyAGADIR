@@ -60,7 +60,7 @@ class ModelResult(object):
         self.N_array = np.zeros(len(seq))
         self.C_array = np.zeros(len(seq))
         n = len(seq)
-        self.dG_dict_mat = [None for j in range(5)] + [[None for _ in range(0, n - j)] for j in range(5, n)]
+        self.dG_dict_mat = [None for j in range(5)] + [[None for _ in range(0, n - j)] for j in range(5, n)] # helix length is at least 6 but we zero-index
         self.K_tot = 0.0
         self.K_tot_array = np.zeros(len(seq))
         self.Z = 0.0
@@ -76,6 +76,15 @@ class ModelResult(object):
             str: The helical propensity.
         """
         return str(self.helical_propensity)
+    
+    def get_sequence(self) -> str:
+        """
+        Get the sequence.
+
+        Returns:
+            str: The sequence.
+        """
+        return self.seq
 
     def get_helical_propensity(self) -> np.ndarray:
         """
@@ -94,6 +103,222 @@ class ModelResult(object):
             float: The percentage of helix.
         """
         return self.percent_helix
+    
+    def get_initialized_params(self) -> str:
+        """
+        Output the initialized parameters for energy calculations.
+        """
+        header_just = 21
+        table_just = 11
+        output = []
+
+        output.append('Thanks for using AGADIR')
+        output.append('')
+        output.append('These are the initialized parameters for energy calculations')
+        output.append('')
+        output.append(f'{"pH".ljust(header_just)}7.0')
+        output.append(f'{"Temperature (K)".ljust(header_just)}278')
+        output.append(f'{"Ionic strength (M)".ljust(header_just)}0.1')
+        output.append('')
+        output.append(f'{"Nterm".ljust(header_just)}free')
+        output.append(f'{"Cterm".ljust(header_just)}free')
+        output.append('')
+        output.append(f'{"Peptide".ljust(header_just)}{self.seq}')
+        output.append('')
+        output.append('dG values in kcal/mol')
+        output.append('')
+
+        # intrinsic energies
+        headers = ["res", "aa", "Intrinsic", "i,i+1", "i,i+3", "i,i+4", "Ncap", "Ccap"]
+        formatted_headers = ''.join([h.ljust(table_just) for h in headers])
+        output.append(formatted_headers)
+
+        for i, AA in enumerate(self.seq):
+            values = [i+1,
+                      AA, 
+                      round(self.int_array[i], 2), 
+                      round(self.i1_array[i], 2), 
+                      round(self.i3_array[i], 2), 
+                      round(self.i4_array[i], 2), 
+                      round(self.N_array[i], 2), 
+                      round(self.C_array[i], 2)]
+            formatted_values = ''.join([str(v).ljust(table_just) for v in values])
+            output.append(formatted_values)
+
+        output.append('')
+        output.append('Legend:')
+        output.append('Intrinsic = intrinsic helix propensity')
+        output.append('i,i+1 = interaction between i and i+1')
+        output.append('i,i+3 = interaction between i and i+3')
+        output.append('i,i+4 = interaction between i and i+4')
+        output.append('Ncap = N-terminal capping')
+        output.append('Ccap = C-terminal capping')
+
+        return '\n'.join(output)
+    
+    def get_separate_helix_contributions(self) -> str:
+        """
+        Get the contributions of each amino acid to the helical propensity,
+        separated by helix length.
+        """
+        header_just = 21
+        table_just = 11
+        output = []
+
+        output.append('Thanks for using AGADIR')
+        output.append('')
+        output.append('These are the contributions of each amino acid to the helical propensity, separated by helix length')
+        output.append('')
+        output.append(f'{"pH".ljust(header_just)}7.0')
+        output.append(f'{"Temperature (K)".ljust(header_just)}278')
+        output.append(f'{"Ionic strength (M)".ljust(header_just)}0.1')
+        output.append('')
+        output.append(f'{"Nterm".ljust(header_just)}free')
+        output.append(f'{"Cterm".ljust(header_just)}free')
+        output.append('')
+        output.append(f'{"Peptide".ljust(header_just)}{self.seq}')
+        output.append('')
+        output.append('dG values in kcal/mol')
+        output.append('')
+
+        # headers
+        headers = ["res","aa"] + [f"H_len_{j+1}" for j in range(5, len(self.seq))]
+        formatted_headers = ''.join([h.ljust(table_just) for h in headers])
+        output.append(formatted_headers)
+        
+        # intrinsic energies
+        for i, AA in enumerate(self.seq):
+            values = [i+1, AA]
+            for j, my_list in enumerate(self.dG_dict_mat):
+                if my_list is None:
+                    continue
+
+                if len(my_list) <= i:
+                    continue
+
+                my_dict = my_list[i]
+                if my_dict is None:
+                    raise ValueError(f"Helix length {j+1} does not have a contribution for position {i+1}.")
+                
+
+                values.append(round(my_dict['dG_Int'], 2))
+                           
+            formatted_values = ''.join([str(v).ljust(table_just) for v in values])
+            output.append(formatted_values)
+
+        output.append('')
+        return '\n'.join(output)
+
+    
+    # def get_total_helix_contributions(self) -> str:
+    #     """
+    #     Get the contributions of each amino acid to the helical propensity,
+    #     including all of the different energy terms.
+    #     """
+    #     header_just = 21
+    #     table_just = 11
+    #     output = []
+
+    #     # header with general information
+    #     output.append('Thanks for using AGADIR')
+    #     output.append('')
+    #     output.append(f'{"pH".ljust(header_just)}7.0') # default pH
+    #     output.append(f'{"Temperature (K)".ljust(header_just)}278') # default temperature
+    #     output.append(f'{"Ionic strength (M)".ljust(header_just)}0.1') # default ionic strength
+    #     output.append('')
+    #     output.append(f'{"Nterm".ljust(header_just)}free')
+    #     output.append(f'{"Cterm".ljust(header_just)}free')
+    #     output.append('')
+    #     output.append(f'{"Peptide".ljust(header_just)}{self.seq}')
+    #     output.append('')
+    #     output.append('dG values in kcal/mol')
+
+    #     # table of the actual contributions
+    #     headers = ["res", 
+    #                "aa", 
+    #                "Sum", 
+    #                "Int", 
+    #                "Hbond", 
+    #                "N_dipole",
+    #                "C_dipole",
+    #                "all_dipole", 
+    #                "i1_tot",
+    #                "i3_tot",
+    #                "i4_tot",
+    #                "SD", 
+    #                "Ncap",
+    #                "Ccap",
+    #                "all_cap"]
+        
+    #     formatted_headers = ''.join([h.ljust(table_just) for h in headers])
+    #     output.append(formatted_headers)
+
+    #     # for each position accumulate the contributions of all helices of different lengths
+    #     dG_Helix = [0.0 for _ in range(len(self.seq))]
+    #     dG_Int = [0.0 for _ in range(len(self.seq))]
+    #     dG_Hbond = [0.0 for _ in range(len(self.seq))]
+    #     dG_N_dipole = [0.0 for _ in range(len(self.seq))]
+    #     dG_C_dipole = [0.0 for _ in range(len(self.seq))]
+    #     dG_dipole = [0.0 for _ in range(len(self.seq))]
+    #     dG_i1_tot = [0.0 for _ in range(len(self.seq))]
+    #     dG_i3_tot = [0.0 for _ in range(len(self.seq))]
+    #     dG_i4_tot = [0.0 for _ in range(len(self.seq))]
+    #     dG_SD = [0.0 for _ in range(len(self.seq))]
+    #     dG_Ncap = [0.0 for _ in range(len(self.seq))]
+    #     dG_Ccap = [0.0 for _ in range(len(self.seq))]
+    #     dG_nonH = [0.0 for _ in range(len(self.seq))]
+    #     for j, my_list in enumerate(self.dG_dict_mat): # for each helix length
+    #         if my_list is None:
+    #             continue
+
+    #         for i, my_dict in enumerate(my_list): # for each position in the sequence
+                
+    #             dG_Helix[i] += my_dict['dG_Helix']
+    #             dG_Int[i] += my_dict['dG_Int']
+    #             dG_Hbond[i] += my_dict['dG_Hbond']
+    #             dG_N_dipole[i] += my_dict['dG_N_dipole']
+    #             dG_C_dipole[i] += my_dict['dG_C_dipole']
+    #             dG_dipole[i] += my_dict['dG_dipole']
+    #             dG_i1_tot[i] += my_dict['dG_i1_tot']
+    #             dG_i3_tot[i] += my_dict['dG_i3_tot']
+    #             dG_i4_tot[i] += my_dict['dG_i4_tot']
+    #             dG_SD[i] += my_dict['dG_SD']
+    #             dG_Ncap[i] += my_dict['dG_Ncap']
+    #             dG_Ccap[i] += my_dict['dG_Ccap']
+    #             dG_nonH[i] += my_dict['dG_nonH']
+
+    #     for i, aa in enumerate(self.seq):
+    #         num_decimals = 2
+    #         values = [i+1, 
+    #                   aa,
+    #                   round(dG_Helix[i], num_decimals), 
+    #                     round(dG_Int[i], num_decimals),
+    #                     round(dG_Hbond[i], num_decimals),
+    #                     round(dG_N_dipole[i], num_decimals),
+    #                     round(dG_C_dipole[i], num_decimals),
+    #                     round(dG_dipole[i], num_decimals),
+    #                     round(dG_i1_tot[i], num_decimals),
+    #                     round(dG_i3_tot[i], num_decimals),
+    #                     round(dG_i4_tot[i], num_decimals),
+    #                     round(dG_SD[i], num_decimals),
+    #                     round(dG_Ncap[i], num_decimals),
+    #                     round(dG_Ccap[i], num_decimals),
+    #                     round(dG_nonH[i], num_decimals),]
+            
+    #         formatted_values = ''.join([str(v).ljust(table_just) for v in values])
+    #         output.append(formatted_values)
+
+    #     output.append('')
+    #     output.append(f'{"Percentage helix".ljust(header_just)}{self.percent_helix*100 :.2f}')
+    #     output.append('')
+    #     output.append('Legend:')
+    #     output.append('Sum = Int + Hbond + SD + all_cap + all_dipole')
+    #     output.append('all_dipole = N_dipole + C_dipole')
+    #     output.append('SD = i1_tot + i3_tot + i4_tot')
+    #     output.append('all_cap = Ncap + Ccap')
+
+
+    #     return '\n'.join(output)
 
 
 def get_dG_Int(AA: str) -> float:
@@ -119,8 +344,12 @@ def get_dG_Hbond(j: int) -> float:
     Returns:
         float: The free energy contribution.
     """
-    # A helix of 6 has two caps and four residues in the helix. 
-    # The first 4 are considered to have zero net enthalpy and caps don't count.
+    # A helix of 6 has two caps and four residues in the helix.
+    # Hydrogen bonds are formed between residues i and i+4.
+    # A helix thus has j-5 hydrogen bonds.
+    # The first 4 are considered to have zero net enthalpy 
+    # since they are nucleating residues and caps don't count, 
+    # for a total of 6.
     dG_Hbond = -0.775
     return dG_Hbond * max((j - 6), 0) 
 
@@ -265,19 +494,18 @@ def get_dG_dipole(seq: str) -> float:
         float: The dipole free energy contribution.
     """
     N = len(seq)
-    dG_N_dipole = 0.0
-    dG_C_dipole = 0.0
+    dG_N_dipole = [0.0 for _ in range(N)]
+    dG_C_dipole = [0.0 for _ in range(N)]
 
     # N-term dipole contributions
     for i in range(0, min(N, 10)):
-        AA = seq[i]
-        dG_N_dipole += table3a.loc[AA, i]
+        dG_N_dipole[i] = table3a.loc[seq[i], i]
 
     # C-term dipole contributions
     seq_inv = seq[::-1]
     for i in range(0, min(N, 10)):
-        AA = seq_inv[i]
-        dG_C_dipole += table3b.loc[AA, i*-1]
+        dG_C_dipole[i] = table3b.loc[seq_inv[i], i*-1]
+    dG_C_dipole = dG_C_dipole[::-1]
 
     return dG_N_dipole, dG_C_dipole
 
@@ -334,9 +562,14 @@ class AGADIR(object):
         self.has_succinyl = False
         self.has_amide = False
 
+        self.min_helix_length = 6
+
     def _initialize_params(self):
         """
         Initialize parameters for energy calculations.
+        The only parameters that need to be calculated are 
+        the intrinsic energies and the i,i+1, i,i+3, i,i+4, Ncap, and Ccap energies.
+        The rest of the parameters are calculated during the calculation of the partition function.
         """
         seq = self.result.seq
 
@@ -375,28 +608,38 @@ class AGADIR(object):
         Returns:
             Tuple[float, Dict[str, float]]: The Helix free energy and its components.
         """
+        if j < self.min_helix_length:
+            raise ValueError(f"Helix length must be at least {self.min_helix_length} amino acids long.")
+        
+        # making values explicit for easier reading of the code
+        zero_ind_adjust = 1
+        cap_adjust = 1
 
-        # sum the intrinsic energies for the helical segment
-        dG_Int = sum(self.result.int_array[i+1:i + j - 1]) # don't include caps
+        # get the intrinsic energies for the helical segment, excluding N- and C-terminal capping ridues
+        dG_Int = self.result.int_array[i + cap_adjust:i + j - zero_ind_adjust]
 
-        # # custom case when Pro at N+1
-        # if self.result.seq[i + 1] == 'P':
-        #     dG_Int += (0.66 - 3.33)
+        # custom case when Pro at N+1
+        if self.result.seq[i + 1] == 'P':
+            print('Pro at N+1', i)
+            dG_Int[i + 1] = 0.66
 
-        # have to calculate dG_Hbond here because it is only relevant for helices
+        # calculate dG_Hbond for the helical segment here
         dG_Hbond = get_dG_Hbond(j)
         
-        # sum side-chain interactions
-        dG_i1_tot = sum(self.result.i1_array[i+1:i + j - 1 - 1]) # don't include caps
-        dG_i3_tot = sum(self.result.i3_array[i+1:i + j - 1 - 3]) # don't include caps
-        dG_i4_tot = sum(self.result.i4_array[i+1:i + j - 1 - 4]) # don't include caps
-        dG_SD = dG_i1_tot + dG_i3_tot + dG_i4_tot
+        # sum side-chain interactions, excluding N- and C-terminal capping ridues
+        # print(len(self.result.i1_array[i + cap_adjust:i + j - cap_adjust - 1]))
+        dG_i1_tot = self.result.i1_array[i + cap_adjust:i + j - zero_ind_adjust - 1]
+        dG_i3_tot = self.result.i3_array[i + cap_adjust:i + j - zero_ind_adjust - 3]
+        dG_i4_tot = self.result.i4_array[i + cap_adjust:i + j - zero_ind_adjust - 4]
+        dG_SD = sum(dG_i1_tot) + sum(dG_i3_tot) + sum(dG_i4_tot)
 
-        # get capping energies
-        dG_Ncap = self.result.N_array[i] # use only caps
-        dG_Ccap = self.result.C_array[i + j - 1] # use only caps
+        # get capping energies, only for the first and last residues of the helix
+        dG_Ncap = self.result.N_array[i]
+        dG_Ccap = self.result.C_array[i + j - zero_ind_adjust] # indexing is zero-based whereas j is 1-based
 
-        # add acetylation and amidation, if present
+        # Add acetylation and amidation effects.
+        # These are only considered for the first and last residues of the helix, 
+        # and only if the peptide has been created in a way that they are present.
         if i == 0 and self.has_acetyl is True:
             dG_Ncap += -1.275
             if self.result.seq[0] == 'A':
@@ -407,7 +650,7 @@ class AGADIR(object):
             if self.result.seq[0] == 'A':
                 dG_Ncap += -0.1
 
-        if i + j == len(self.result.seq) and self.has_amide is True:
+        if (i + j == len(self.result.seq)) and (self.has_amide is True):
             dG_Ccap += -0.81
             if self.result.seq[-1] == 'A':
                 dG_Ccap += -0.1
@@ -415,12 +658,13 @@ class AGADIR(object):
         # sum non-hydrogen bond interactions
         dG_nonH = dG_Ncap + dG_Ccap
 
-        # sum dipole interactions
-        dG_N_dipole, dG_C_dipole = get_dG_dipole(self.result.seq[i+1:i + j - 1]) # caps are NOT needed, the nomenclature is that of Richardson & Richardson (1988).
-        dG_dipole = dG_N_dipole + dG_C_dipole
+        # sum dipole interactions, excluding N- and C-terminal capping ridues
+        # the nomenclature is that of Richardson & Richardson (1988).
+        dG_N_dipole, dG_C_dipole = get_dG_dipole(self.result.seq[i + cap_adjust:i + j - zero_ind_adjust])
+        dG_dipole = sum(dG_N_dipole) + sum(dG_C_dipole)
 
         # sum all components
-        dG_Hel = dG_Int + dG_Hbond + dG_SD + dG_nonH + dG_dipole
+        dG_Hel = sum(dG_Int) + dG_Hbond + dG_SD + dG_nonH + dG_dipole
 
         dG_dict = {
             'dG_Helix': dG_Hel,
@@ -442,14 +686,12 @@ class AGADIR(object):
 
     def _calc_partition_fxn(self):
         """
-        Calculate partition function for helical segments.
+        Calculate partition function for helical segments 
+        by summing over all possible helices.
         """
-        seq = self.result.seq
-
-        n = len(seq)
-        for j in range(6, n+1): # helix lengths (including caps)
-            for i in range(0, n-j+1): # helical segment positions
-                # print(i, j, i+j)
+        for j in range(self.min_helix_length, len(self.result.seq) + 1): # helix lengths (including caps)
+            for i in range(0, len(self.result.seq) - j + 1): # helical segment positions
+                print(i)
 
                 # calculate dG_Hel and dG_dict
                 dG_Hel, dG_dict = self._calc_dG_Hel(i, j)
@@ -458,10 +700,11 @@ class AGADIR(object):
                 # calculate K
                 K = calc_K(dG_Hel, self.T)
 
-                self.result.K_tot_array[i+1:i+j-1] += K # method='r', by definition helical region does not include caps
+                self.result.K_tot_array[i + 1:i + j - 1] += K # method='r', by definition helical region does not include caps
                 self.result.K_tot += K # method='1s'
 
         # if method='ms' (custom calculation here with result.dG_dict_mat)
+        ### Not implemented yet ###
 
     def _calc_helical_propensity(self):
         """
@@ -470,8 +713,8 @@ class AGADIR(object):
         self.result.Z_array = 1.0 + self.result.K_tot_array
         self.result.Z = 1.0 + self.result.K_tot
 
-        self.result.helical_propensity = self._probability_fxn(self.result)
-        self.result.percent_helix = np.round(np.mean(self.result.helical_propensity), 3)
+        self.result.helical_propensity = 100 * self._probability_fxn(self.result)
+        self.result.percent_helix = np.round(np.mean(self.result.helical_propensity), 2)
 
     def predict(self, seq: str) -> ModelResult:
         """
@@ -483,13 +726,10 @@ class AGADIR(object):
         Returns:
             ModelResult: Object containing the predicted helical propensity.
         """
-        if not isinstance(seq, str):
-            raise ValueError("Input sequence must be a string.")
-        
         seq = seq.upper()
         
-        if len(seq) < 6:
-            raise ValueError("Input sequence must be at least 6 amino acids long.")
+        if len(seq) < self.min_helix_length:
+            raise ValueError(f"Input sequence must be at least {self.min_helix_length} amino acids long.")
         
         # check for acylation and amidation
         if seq[0] == 'Z':

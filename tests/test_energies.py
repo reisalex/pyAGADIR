@@ -56,6 +56,8 @@ def test_dG_Int():
         for aa in table2.index:
             model = AGADIR(method=method)
             result = model.predict(aa*pep_len)
+            print(aa)
+            print(result.int_array)
             assert all([result.int_array[i] == table2.loc[aa, 'Intrinsic'] for i in range(pep_len)])
             assert result.int_array.shape == (pep_len,)
 
@@ -82,23 +84,26 @@ def test_dG_SD():
 
     # C to S interaction
     for method in ['r', '1s']:
-        pep = 'ACAASSAAAAAA'
+        pep = 'ACAACSAAAAAA'
         model = AGADIR(method=method)
         result = model.predict(pep)
-        assert result.i4_array[1] == 0.2
+        assert result.i3_array[1] == 0.2 # C to C interaction
+        assert result.i4_array[1] == 0.2 # C to S interaction
         assert all([result.i1_array[i] == 0.0 for i in range(len(pep))])
-        assert all([result.i3_array[i] == 0.0 for i in range(len(pep))])
+        assert all([result.i3_array[i] == 0.0 for i in range(len(pep)) if i != 1])
         assert all([result.i4_array[i] == 0.0 for i in range(len(pep)) if i != 1])    
 
-    # S to C interaction
+    # M to W,  M to F and W to M interaction
     for method in ['r', '1s']:
-        pep = 'ASAACCAAAAAA'
+        pep = 'AMAAWFAMAAAA'
         model = AGADIR(method=method)
         result = model.predict(pep)
-        assert result.i4_array[1] == 0.3
+        assert result.i3_array[1] == -0.3 # M to W interaction
+        assert result.i4_array[1] == -0.2 # M to F interaction
+        assert result.i3_array[4] == -0.25 # W to M interaction
         assert all([result.i1_array[i] == 0.0 for i in range(len(pep))])
-        assert all([result.i3_array[i] == 0.0 for i in range(len(pep))])
-        assert all([result.i4_array[i] == 0.0 for i in range(len(pep)) if i != 1])
+        assert all([result.i3_array[i] == 0.0 for i in range(len(pep)) if i not in [1, 4]])
+        assert all([result.i4_array[i] == 0.0 for i in range(len(pep)) if i not in [1, 4]])
 
     # bad interaction with negative charge at position i + 1, 3, 4
     for method in ['r', '1s']:
@@ -141,7 +146,7 @@ def test_dG_nonH():
     """Test the capping interactions.
     """
     ### N capping ###
-    # need to better understand the N capping interactions before writing tests
+    # need to better understand the N capping interactions before writing additional tests
 
     ### C capping ###
     # Ala has no capping interactions
@@ -178,17 +183,40 @@ def test_dG_dipole():
 
     # test the C-terminal
     n_energy, c_energy = get_dG_dipole('AAAAAAAAAAH')
-    assert (n_energy == 0.0 and c_energy == -0.44)
+    assert (sum(n_energy) == 0.0 and sum(c_energy) == -0.44)
+    assert c_energy[-1] == -0.44
 
     n_energy, c_energy = get_dG_dipole('AAAAAAAAAHA')
-    assert (n_energy == 0.23 and c_energy == -0.34)
+    assert (sum(n_energy) == 0.23 and sum(c_energy) == -0.34)
 
     # test the N-terminal
     n_energy, c_energy = get_dG_dipole('DAAAAAAAAAA')
-    assert (n_energy == -0.34 and c_energy == 0.0)
+    assert (sum(n_energy) == -0.34 and sum(c_energy) == 0.0)
+    assert n_energy[0] == -0.34
 
     n_energy, c_energy = get_dG_dipole('ADAAAAAAAAA')
-    assert (n_energy == -0.51 and c_energy == 0.08)
+    assert (sum(n_energy) == -0.51 and sum(c_energy) == 0.08)
+
+    # check all values
+    n_energy, c_energy = get_dG_dipole('DDDDDDDDDDD')
+    assert (n_energy == [-0.34, -0.51, -0.53, -0.42, -0.18, -0.15, -0.13, -0.12, -0.11, -0.09, 0.0])
+    assert (c_energy == [0.0, 0.08, 0.1, 0.13, 0.17, 0.18, 0.22, 0.26, 0.53, 0.9, 0.58])
+
+    n_energy, c_energy = get_dG_dipole('EEEEEEEEEEE')
+    assert (n_energy == [-0.26, -0.39, -0.22, -0.19, -0.18, -0.15, -0.13, -0.12, -0.09, -0.08, 0.0])
+    assert (c_energy == [0.0, 0.07, 0.09, 0.1, 0.13, 0.15, 0.16, 0.2, 0.38, 0.46, 0.4])
+
+    n_energy, c_energy = get_dG_dipole('HHHHHHHHHHH')
+    assert (n_energy == [0.33, 1.4, 1.4, 0.52, 0.39, 0.36, 0.34, 0.32, 0.26, 0.23, 0.0])
+    assert (c_energy == [0.0, -0.08, -0.09, -0.09, -0.09, -0.11, -0.13, -0.19, -0.23, -0.34, -0.44])
+
+    n_energy, c_energy = get_dG_dipole('KKKKKKKKKKK')
+    assert (n_energy == [0.43, 0.38, 0.64, 0.58, 0.48, 0.27, 0.24, 0.2, 0.18, 0.11, 0.0])
+    assert (c_energy == [0.0, -0.08, -0.09, -0.1, -0.12, -0.13, -0.26, -0.32, -0.34, -0.36, -0.51])
+
+    n_energy, c_energy = get_dG_dipole('RRRRRRRRRRR')
+    assert (n_energy == [0.29, 0.33, 0.44, 0.4, 0.34, 0.21, 0.19, 0.16, 0.15, 0.09, 0.0])
+    assert (c_energy == [0.0, -0.07, -0.07, -0.09, -0.09, -0.11, -0.25, -0.24, -0.26, -0.27, -0.36])
 
 
 def test_dG_Hbond():
@@ -198,11 +226,7 @@ def test_dG_Hbond():
     h_energy = get_dG_Hbond(len(pept))
     assert h_energy == -0.775 * max((len(pept) - 6), 0)
 
-    pept = 'AAAAH'
+    pept = 'AAHAAH'
     h_energy = get_dG_Hbond(len(pept))
-    assert h_energy == -0.775 * max((len(pept) - 6), 0)
-
-    pept = 'AAH'
-    h_energy = get_dG_Hbond(len(pept))
-    assert h_energy == -0.775 * max((len(pept) - 6), 0)
+    assert h_energy == 0.0
 
