@@ -104,110 +104,110 @@ class ModelResult(object):
         """
         return self.percent_helix
     
-    def get_initialized_params(self) -> str:
-        """
-        Output the initialized parameters for energy calculations.
-        """
-        header_just = 21
-        table_just = 11
-        output = []
+    # def get_initialized_params(self) -> str:
+    #     """
+    #     Output the initialized parameters for energy calculations.
+    #     """
+    #     header_just = 21
+    #     table_just = 11
+    #     output = []
 
-        output.append('Thanks for using AGADIR')
-        output.append('')
-        output.append('These are the initialized parameters for energy calculations')
-        output.append('')
-        output.append(f'{"pH".ljust(header_just)}7.0')
-        output.append(f'{"Temperature (K)".ljust(header_just)}278')
-        output.append(f'{"Ionic strength (M)".ljust(header_just)}0.1')
-        output.append('')
-        output.append(f'{"Nterm".ljust(header_just)}free')
-        output.append(f'{"Cterm".ljust(header_just)}free')
-        output.append('')
-        output.append(f'{"Peptide".ljust(header_just)}{self.seq}')
-        output.append('')
-        output.append('dG values in kcal/mol')
-        output.append('')
+    #     output.append('Thanks for using AGADIR')
+    #     output.append('')
+    #     output.append('These are the initialized parameters for energy calculations')
+    #     output.append('')
+    #     output.append(f'{"pH".ljust(header_just)}7.0')
+    #     output.append(f'{"Temperature (K)".ljust(header_just)}278')
+    #     output.append(f'{"Ionic strength (M)".ljust(header_just)}0.1')
+    #     output.append('')
+    #     output.append(f'{"Nterm".ljust(header_just)}free')
+    #     output.append(f'{"Cterm".ljust(header_just)}free')
+    #     output.append('')
+    #     output.append(f'{"Peptide".ljust(header_just)}{self.seq}')
+    #     output.append('')
+    #     output.append('dG values in kcal/mol')
+    #     output.append('')
 
-        # intrinsic energies
-        headers = ["res", "aa", "Intrinsic", "i,i+1", "i,i+3", "i,i+4", "Ncap", "Ccap"]
-        formatted_headers = ''.join([h.ljust(table_just) for h in headers])
-        output.append(formatted_headers)
+    #     # intrinsic energies
+    #     headers = ["res", "aa", "Intrinsic", "i,i+1", "i,i+3", "i,i+4", "Ncap", "Ccap"]
+    #     formatted_headers = ''.join([h.ljust(table_just) for h in headers])
+    #     output.append(formatted_headers)
 
-        for i, AA in enumerate(self.seq):
-            values = [i+1,
-                      AA, 
-                      round(self.int_array[i], 2), 
-                      round(self.i1_array[i], 2), 
-                      round(self.i3_array[i], 2), 
-                      round(self.i4_array[i], 2), 
-                      round(self.N_array[i], 2), 
-                      round(self.C_array[i], 2)]
-            formatted_values = ''.join([str(v).ljust(table_just) for v in values])
-            output.append(formatted_values)
+    #     for i, AA in enumerate(self.seq):
+    #         values = [i+1,
+    #                   AA, 
+    #                   round(self.int_array[i], 2), 
+    #                   round(self.i1_array[i], 2), 
+    #                   round(self.i3_array[i], 2), 
+    #                   round(self.i4_array[i], 2), 
+    #                   round(self.N_array[i], 2), 
+    #                   round(self.C_array[i], 2)]
+    #         formatted_values = ''.join([str(v).ljust(table_just) for v in values])
+    #         output.append(formatted_values)
 
-        output.append('')
-        output.append('Legend:')
-        output.append('Intrinsic = intrinsic helix propensity')
-        output.append('i,i+1 = interaction between i and i+1')
-        output.append('i,i+3 = interaction between i and i+3')
-        output.append('i,i+4 = interaction between i and i+4')
-        output.append('Ncap = N-terminal capping')
-        output.append('Ccap = C-terminal capping')
+    #     output.append('')
+    #     output.append('Legend:')
+    #     output.append('Intrinsic = intrinsic helix propensity')
+    #     output.append('i,i+1 = interaction between i and i+1')
+    #     output.append('i,i+3 = interaction between i and i+3')
+    #     output.append('i,i+4 = interaction between i and i+4')
+    #     output.append('Ncap = N-terminal capping')
+    #     output.append('Ccap = C-terminal capping')
 
-        return '\n'.join(output)
+    #     return '\n'.join(output)
     
-    def get_separate_helix_contributions(self) -> str:
-        """
-        Get the contributions of each amino acid to the helical propensity,
-        separated by helix length.
-        """
-        header_just = 21
-        table_just = 11
-        output = []
+    # def get_separate_helix_contributions(self) -> str:
+    #     """
+    #     Get the contributions of each amino acid to the helical propensity,
+    #     separated by helix length.
+    #     """
+    #     header_just = 21
+    #     table_just = 11
+    #     output = []
 
-        output.append('Thanks for using AGADIR')
-        output.append('')
-        output.append('These are the contributions of each amino acid to the helical propensity, separated by helix length')
-        output.append('')
-        output.append(f'{"pH".ljust(header_just)}7.0')
-        output.append(f'{"Temperature (K)".ljust(header_just)}278')
-        output.append(f'{"Ionic strength (M)".ljust(header_just)}0.1')
-        output.append('')
-        output.append(f'{"Nterm".ljust(header_just)}free')
-        output.append(f'{"Cterm".ljust(header_just)}free')
-        output.append('')
-        output.append(f'{"Peptide".ljust(header_just)}{self.seq}')
-        output.append('')
-        output.append('dG values in kcal/mol')
-        output.append('')
+    #     output.append('Thanks for using AGADIR')
+    #     output.append('')
+    #     output.append('These are the contributions of each amino acid to the helical propensity, separated by helix length')
+    #     output.append('')
+    #     output.append(f'{"pH".ljust(header_just)}7.0')
+    #     output.append(f'{"Temperature (K)".ljust(header_just)}278')
+    #     output.append(f'{"Ionic strength (M)".ljust(header_just)}0.1')
+    #     output.append('')
+    #     output.append(f'{"Nterm".ljust(header_just)}free')
+    #     output.append(f'{"Cterm".ljust(header_just)}free')
+    #     output.append('')
+    #     output.append(f'{"Peptide".ljust(header_just)}{self.seq}')
+    #     output.append('')
+    #     output.append('dG values in kcal/mol')
+    #     output.append('')
 
-        # headers
-        headers = ["res","aa"] + [f"H_len_{j+1}" for j in range(5, len(self.seq))]
-        formatted_headers = ''.join([h.ljust(table_just) for h in headers])
-        output.append(formatted_headers)
+    #     # headers
+    #     headers = ["res","aa"] + [f"H_len_{j+1}" for j in range(5, len(self.seq))]
+    #     formatted_headers = ''.join([h.ljust(table_just) for h in headers])
+    #     output.append(formatted_headers)
         
-        # intrinsic energies
-        for i, AA in enumerate(self.seq):
-            values = [i+1, AA]
-            for j, my_list in enumerate(self.dG_dict_mat):
-                if my_list is None:
-                    continue
+    #     # intrinsic energies
+    #     for i, AA in enumerate(self.seq):
+    #         values = [i+1, AA]
+    #         for j, my_list in enumerate(self.dG_dict_mat):
+    #             if my_list is None:
+    #                 continue
 
-                if len(my_list) <= i:
-                    continue
+    #             if len(my_list) <= i:
+    #                 continue
 
-                my_dict = my_list[i]
-                if my_dict is None:
-                    raise ValueError(f"Helix length {j+1} does not have a contribution for position {i+1}.")
+    #             my_dict = my_list[i]
+    #             if my_dict is None:
+    #                 raise ValueError(f"Helix length {j+1} does not have a contribution for position {i+1}.")
                 
 
-                values.append(round(my_dict['dG_Int'], 2))
+    #             values.append(round(my_dict['dG_Int'], 2))
                            
-            formatted_values = ''.join([str(v).ljust(table_just) for v in values])
-            output.append(formatted_values)
+    #         formatted_values = ''.join([str(v).ljust(table_just) for v in values])
+    #         output.append(formatted_values)
 
-        output.append('')
-        return '\n'.join(output)
+    #     output.append('')
+    #     return '\n'.join(output)
 
     
     # def get_total_helix_contributions(self) -> str:
@@ -321,88 +321,140 @@ class ModelResult(object):
     #     return '\n'.join(output)
 
 
-def get_dG_Int(AA: str) -> float:
+def is_valid_amino_acid_sequence(seq: str) -> None:
     """
-    Get the intrinsic free energy contribution.
+    Validate that the input is a valid amino acid sequence.
 
     Args:
-        AA (str): The amino acid.
+        seq (str): The input sequence.
 
-    Returns:
-        float: The intrinsic free energy contribution.
+    Raises:
+        TypeError: If the input is not a string.
+        ValueError: If the sequence contains invalid amino acids.
     """
-    return table2.loc[AA, 'Intrinsic']
+    if not isinstance(seq, str):
+        raise TypeError("Input must be a string.")
+    
+    if not len(seq) >= 6:
+        raise ValueError("Sequence must be at least 6 amino acids long.")
+    
+    valid_amino_acids = set("ACDEFGHIKLMNPQRSTVWY")
+    invalid_residues = [residue for residue in seq.upper() if residue not in valid_amino_acids]
+    
+    if invalid_residues:
+        raise ValueError(f"Invalid amino acids found in sequence: {', '.join(invalid_residues)}")
 
 
-def get_dG_Hbond(j: int) -> float:
+def get_dG_Int(seq: str) -> np.ndarray:
     """
-    Get the free energy contribution for hydrogen bonding.
+    Get the intrinsic free energy contributions for a sequence. 
+    The first and last residues are considered to be the caps and 
+    do not contribute to the intrinsic free energy.
 
     Args:
-        j (int): The index.
+        seq (str): The protein sequence.
 
     Returns:
-        float: The free energy contribution.
+        np.ndarray: The intrinsic free energy contributions for each amino acid in the sequence.
     """
-    # A helix of 6 has two caps and four residues in the helix.
-    # Hydrogen bonds are formed between residues i and i+4.
-    # A helix thus has j-5 hydrogen bonds.
-    # The first 4 are considered to have zero net enthalpy 
+    is_valid_amino_acid_sequence(seq)
+
+    # get the intrinsic energies for the sequence
+    energy = np.array([0.0 if i in [0, len(seq)-1] else table2.loc[AA, 'Intrinsic'] for i, AA in enumerate(seq)])
+
+    # custom case when Pro at N+1
+    if seq[1] == 'P':
+        energy[1] = 0.66
+    return energy
+
+
+def get_dG_Hbond(seq: str) -> float:
+    """
+    Get the free energy contribution for hydrogen bonding for a sequence.
+
+    Args:
+        seq (str): The protein sequence.
+
+    Returns:
+        float: The total free energy contribution for hydrogen bonding in the sequence.
+    """
+    is_valid_amino_acid_sequence(seq)
+
+    # The first 4 helical amino acids are considered to have zero net enthalpy 
     # since they are nucleating residues and caps don't count, 
     # for a total of 6.
-    dG_Hbond = -0.775
-    return dG_Hbond * max((j - 6), 0) 
+    j = len(seq)
+    energy = -0.775 * max((j - 6), 0)
+    return energy 
 
 
-def get_dG_i1(AAi: str, AAi1: str) -> float:
+def get_dG_i1(seq: str) -> np.ndarray:
     """
-    Get the free energy contribution for interaction between AAi and AAi1.
+    Get the free energy contribution for interaction between each AAi and AAi+1 in the sequence.
 
     Args:
-        AAi (str): The first amino acid.
-        AAi1 (str): The second amino acid.
+        seq (str): The protein sequence.
 
     Returns:
-        float: The free energy contribution.
+        np.ndarray: The free energy contributions for each interaction.
     """
-    charge = 1
-    for AA in [AAi, AAi1]:
-        if AA in set(['R', 'H', 'K']):
-            charge *= 1
-        elif AA in set(['D', 'E']):
-            charge *= -1
-        else:
-            return 0.0
-    else:
-        return 0.05 * charge
+    is_valid_amino_acid_sequence(seq)
+
+    energy = np.zeros(len(seq))
+    for i in range(len(seq) - 1):
+        AAi = seq[i]
+        AAi1 = seq[i + 1]
+        charge = 1
+        for AA in [AAi, AAi1]:
+            if AA in set(['R', 'H', 'K']):
+                charge *= 1
+            elif AA in set(['D', 'E']):
+                charge *= -1
+            else:
+                charge = 0
+                break
+        energy[i] = 0.05 * charge if charge != 0 else 0.0
+    return energy
 
 
-def get_dG_i3(AAi: str, AAi3: str) -> float:
+def get_dG_i3(seq: str) -> np.ndarray:
     """
-    Get the free energy contribution for interaction between AAi and AAi3.
+    Get the free energy contribution for interaction between each AAi and AAi+3 in the sequence.
 
     Args:
-        AAi (str): The first amino acid.
-        AAi3 (str): The third amino acid.
+        seq (str): The protein sequence.
 
     Returns:
-        float: The free energy contribution.
+        np.ndarray: The free energy contributions for each interaction.
     """
-    return table4a.loc[AAi, AAi3]
+    is_valid_amino_acid_sequence(seq)   
+
+    energy = np.zeros(len(seq))
+    for i in range(len(seq) - 3):
+        AAi = seq[i]
+        AAi3 = seq[i + 3]
+        energy[i] = table4a.loc[AAi, AAi3]
+    return energy
 
 
-def get_dG_i4(AAi: str, AAi4: str) -> float:
+def get_dG_i4(seq: str) -> np.ndarray:
     """
-    Get the free energy contribution for interaction between AAi and AAi4.
+    Get the free energy contribution for interaction between each AAi and AAi+4 in the sequence.
 
     Args:
-        AAi (str): The first amino acid.
-        AAi4 (str): The fourth amino acid.
+        seq (str): The protein sequence.
 
     Returns:
-        float: The free energy contribution.
+        np.ndarray: The free energy contributions for each interaction.
     """
-    return table4b.loc[AAi, AAi4]
+    is_valid_amino_acid_sequence(seq)
+
+    energy = np.zeros(len(seq))
+    for i in range(len(seq) - 4):
+        AAi = seq[i]
+        AAi4 = seq[i + 4]
+        energy[i] = table4b.loc[AAi, AAi4]
+    return energy
 
 
 def get_dG_Ncap(seq: str) -> float:
@@ -415,6 +467,8 @@ def get_dG_Ncap(seq: str) -> float:
     Returns:
         float: The free energy contribution.
     """
+    is_valid_amino_acid_sequence(seq)
+    
     # Get the Ncap residue
     Ncap = seq[0]
 
@@ -467,17 +521,20 @@ def get_dG_Ncap(seq: str) -> float:
     return dG_Ncap
 
 
-def get_dG_Ccap(AA: str) -> float:
+def get_dG_Ccap(seq: str) -> float:
     """
     Get the free energy contribution for C-terminal capping.
 
     Args:
-        AA (str): The amino acid.
+        seq (str): The protein sequence.
 
     Returns:
         float: The free energy contribution.
     """
-    return table2.loc[AA, 'C_cap']
+    is_valid_amino_acid_sequence(seq)
+
+    Ccap = seq[-1]  # Get the last amino acid in the sequence
+    return table2.loc[Ccap, 'C_cap']
 
 
 def get_dG_dipole(seq: str) -> float:
@@ -493,9 +550,11 @@ def get_dG_dipole(seq: str) -> float:
     Returns:
         float: The dipole free energy contribution.
     """
+    is_valid_amino_acid_sequence(seq)
+    
     N = len(seq)
-    dG_N_dipole = [0.0 for _ in range(N)]
-    dG_C_dipole = [0.0 for _ in range(N)]
+    dG_N_dipole = np.zeros(N)
+    dG_C_dipole = np.zeros(N)
 
     # N-term dipole contributions
     for i in range(0, min(N, 10)):
@@ -564,103 +623,42 @@ class AGADIR(object):
 
         self.min_helix_length = 6
 
-    def _initialize_params(self):
-        """
-        Initialize parameters for energy calculations.
-        The only parameters that need to be calculated are 
-        the intrinsic energies and the i,i+1, i,i+3, i,i+4, Ncap, and Ccap energies.
-        The rest of the parameters are calculated during the calculation of the partition function.
-        """
-        seq = self.result.seq
-
-        # get intrinsic energies
-        for i in range(0, len(seq)):
-            self.result.int_array[i] = get_dG_Int(seq[i])
-
-        # get i,i+1 energies (coulombic)
-        for i in range(0, len(seq)-1):
-            self.result.i1_array[i] = get_dG_i1(seq[i], seq[i+1])
-
-        # get i,i+3 energies (dG_SD)
-        for i in range(0, len(seq)-3):
-            self.result.i3_array[i] = get_dG_i3(seq[i], seq[i+3])
-
-        # get i,i+4 energies (dG_SD)
-        for i in range(0, len(seq)-4):
-            self.result.i4_array[i] = get_dG_i4(seq[i], seq[i+4])
-        
-        # get Ncap energies
-        for i in range(0, len(seq)-5):
-            self.result.N_array[i] = get_dG_Ncap(seq[i:i+6])
-
-        # get Ccap energies
-        for i in range(5, len(seq)):
-            self.result.C_array[i] = get_dG_Ccap(seq[i])
-
-    def _calc_dG_Hel(self, i: int, j: int) -> Tuple[float, Dict[str, float]]:
+    def _calc_dG_Hel(self, seq: str) -> Tuple[float, Dict[str, float]]:
         """
         Calculate the Helix free energy and its components.
 
         Args:
-            i (int): The start index of the helical segment.
-            j (int): The length of the helical segment.
+            seq (str): The helical segment sequence.
 
         Returns:
             Tuple[float, Dict[str, float]]: The Helix free energy and its components.
         """
+        j = len(seq)
         if j < self.min_helix_length:
             raise ValueError(f"Helix length must be at least {self.min_helix_length} amino acids long.")
-        
-        # making values explicit for easier reading of the code
-        zero_ind_adjust = 1
-        cap_adjust = 1
 
         # get the intrinsic energies for the helical segment, excluding N- and C-terminal capping ridues
-        dG_Int = self.result.int_array[i + cap_adjust:i + j - zero_ind_adjust]
-
-        # custom case when Pro at N+1
-        if self.result.seq[i + 1] == 'P':
-            print('Pro at N+1', i)
-            dG_Int[i + 1] = 0.66
+        dG_Int = get_dG_Int(seq)
 
         # calculate dG_Hbond for the helical segment here
-        dG_Hbond = get_dG_Hbond(j)
+        dG_Hbond = get_dG_Hbond(seq)
         
         # sum side-chain interactions, excluding N- and C-terminal capping ridues
-        # print(len(self.result.i1_array[i + cap_adjust:i + j - cap_adjust - 1]))
-        dG_i1_tot = self.result.i1_array[i + cap_adjust:i + j - zero_ind_adjust - 1]
-        dG_i3_tot = self.result.i3_array[i + cap_adjust:i + j - zero_ind_adjust - 3]
-        dG_i4_tot = self.result.i4_array[i + cap_adjust:i + j - zero_ind_adjust - 4]
+        dG_i1_tot = get_dG_i1(seq)
+        dG_i3_tot = get_dG_i3(seq)
+        dG_i4_tot = get_dG_i4(seq)
         dG_SD = sum(dG_i1_tot) + sum(dG_i3_tot) + sum(dG_i4_tot)
 
         # get capping energies, only for the first and last residues of the helix
-        dG_Ncap = self.result.N_array[i]
-        dG_Ccap = self.result.C_array[i + j - zero_ind_adjust] # indexing is zero-based whereas j is 1-based
-
-        # Add acetylation and amidation effects.
-        # These are only considered for the first and last residues of the helix, 
-        # and only if the peptide has been created in a way that they are present.
-        if i == 0 and self.has_acetyl is True:
-            dG_Ncap += -1.275
-            if self.result.seq[0] == 'A':
-                dG_Ncap += -0.1
-
-        elif i == 0 and self.has_succinyl is True:
-            dG_Ncap += -1.775
-            if self.result.seq[0] == 'A':
-                dG_Ncap += -0.1
-
-        if (i + j == len(self.result.seq)) and (self.has_amide is True):
-            dG_Ccap += -0.81
-            if self.result.seq[-1] == 'A':
-                dG_Ccap += -0.1
+        dG_Ncap = get_dG_Ncap(seq)
+        dG_Ccap = get_dG_Ccap(seq)
 
         # sum non-hydrogen bond interactions
         dG_nonH = dG_Ncap + dG_Ccap
 
         # sum dipole interactions, excluding N- and C-terminal capping ridues
         # the nomenclature is that of Richardson & Richardson (1988).
-        dG_N_dipole, dG_C_dipole = get_dG_dipole(self.result.seq[i + cap_adjust:i + j - zero_ind_adjust])
+        dG_N_dipole, dG_C_dipole = get_dG_dipole(seq)
         dG_dipole = sum(dG_N_dipole) + sum(dG_C_dipole)
 
         # sum all components
@@ -691,11 +689,32 @@ class AGADIR(object):
         """
         for j in range(self.min_helix_length, len(self.result.seq) + 1): # helix lengths (including caps)
             for i in range(0, len(self.result.seq) - j + 1): # helical segment positions
-                print(i)
+                # print('i:', i, 'j:', j, 'seq:', self.result.seq[i:i+j])
+
+                # get the relevant protein segment
+                seq_segment = self.result.seq[i:i + j]
 
                 # calculate dG_Hel and dG_dict
-                dG_Hel, dG_dict = self._calc_dG_Hel(i, j)
+                dG_Hel, dG_dict = self._calc_dG_Hel(seq=seq_segment)
                 self.result.dG_dict_mat[j-1][i] = dG_dict
+
+                # Add acetylation and amidation effects.
+                # These are only considered for the first and last residues of the helix, 
+                # and only if the peptide has been created in a way that they are present.
+                if i == 0 and self.has_acetyl is True:
+                    dG_Hel += -1.275
+                    if self.result.seq[0] == 'A':
+                        dG_Hel += -0.1
+
+                elif i == 0 and self.has_succinyl is True:
+                    dG_Hel += -1.775
+                    if self.result.seq[0] == 'A':
+                        dG_Hel += -0.1
+
+                if (i + j == len(self.result.seq)) and (self.has_amide is True):
+                    dG_Hel += -0.81
+                    if self.result.seq[-1] == 'A':
+                        dG_Hel += -0.1
 
                 # calculate K
                 K = calc_K(dG_Hel, self.T)
@@ -748,7 +767,6 @@ class AGADIR(object):
             raise ValueError('Parameter `seq` should contain only natural amino acids: ACDEFGHIKLMNPQRSTVWY.')
 
         self.result = ModelResult(seq)
-        self._initialize_params()
         self._calc_partition_fxn()
         self._calc_helical_propensity()
         return self.result
