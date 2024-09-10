@@ -85,8 +85,6 @@ def get_dG_Int(pept: str, i: int, j: int, pH: float = 7.0) -> np.ndarray:
     # initialize energy array
     energy = np.zeros(len(helix))
 
-    print('i', i, 'j', j, 'helix', helix, 'energy', energy)
-
     # iterate over the helix and get the intrinsic energy for each residue
     for idx, AA in enumerate(helix):
 
@@ -117,48 +115,86 @@ def get_dG_Int(pept: str, i: int, j: int, pH: float = 7.0) -> np.ndarray:
     return energy
 
 
-def get_dG_Ncap(seq: str) -> np.ndarray:
+def get_dG_Ncap(pept: str, i: int, j: int) -> np.ndarray:
     """
     Get the free energy contribution for N-terminal capping.
 
     Args:
-        seq (str): The amino acid sequence.
+        pept (str): The peptide sequence.
+        i (int): The helix start index, python 0-indexed.
+        j (int): The helix length.
 
     Returns:
         np.ndarray: The free energy contribution.
     """
-    is_valid_peptide_sequence(seq)
-    
-        # Nc-4 	N-cap values when there is a Pro at position N1 and Glu, Asp or Gln at position N3.  
-    if helix[idx+1] == 'P' and helix[idx+3] in ['E', 'D', 'Q']:
-        energy[idx] = table_1_lacroix.loc[AA, 'Nc-4']
+    is_valid_peptide_sequence(pept)
+    is_valid_index(pept, i, j)
+
+    # get the helix
+    helix = get_helix(pept, i, j)
+
+    # fix the blocking group names to match the table
+    AA = helix[0]
+    if AA in ['Z', 'X']:
+        AA = 'Ac'
+
+    energy = np.zeros(len(helix))
+
+    # Nc-4 	N-cap values when there is a Pro at position N1 and Glu, Asp or Gln at position N3.  
+    if helix[1] == 'P' and helix[3] in ['E', 'D', 'Q']:
+        energy[0] = table_1_lacroix.loc[AA, 'Nc-4']
     
     # Nc-3 	N-cap values when there is a Glu, Asp or Gln at position N3.
-    elif helix[idx+3] in ['E', 'D', 'Q']:
-        energy[idx] = table_1_lacroix.loc[AA, 'Nc-3']
+    elif helix[3] in ['E', 'D', 'Q']:
+        energy[0] = table_1_lacroix.loc[AA, 'Nc-3']
 
-    # Nc-2 	N-cap values when there is a Pro at position N1.  
+    # Nc-2 	N-cap values when there is a Pro at position N1.
+    elif helix[1] == 'P':
+        energy[0] = table_1_lacroix.loc[AA, 'Nc-2']
 
-    # Nc-1 	Normal N-cap values. 
+    # Nc-1 	Normal N-cap values.
+    else:
+        energy[0] = table_1_lacroix.loc[AA, 'Nc-1']
+
+    return energy
 
 
-def get_dG_Ccap(seq: str) -> np.ndarray:
+def get_dG_Ccap(pept: str, i: int, j: int) -> np.ndarray:
     """
-    Get the free energy contribution for C-terminal capping.
+    Get the free energy contribution for N-terminal capping.
 
     Args:
-        seq (str): The protein sequence.
+        pept (str): The peptide sequence.
+        i (int): The helix start index, python 0-indexed.
+        j (int): The helix length.
 
     Returns:
         np.ndarray: The free energy contribution.
     """
-    is_valid_peptide_sequence(seq)
+    is_valid_peptide_sequence(pept)
+    is_valid_index(pept, i, j)
 
-    get_dG_Ccap = table2.loc[seq[-1], 'C_cap'] # Get the last amino acid in the sequence
-    energy = np.zeros(len(seq))
-    energy[-1] = get_dG_Ccap
+    # get the helix
+    helix = get_helix(pept, i, j)
+
+    # fix the blocking group names to match the table
+    AA = helix[-1]
+    if AA == 'B':
+        AA = 'Am'
+    
+    energy = np.zeros(len(helix))
+
+    # Cc-2 	C-cap values when there is a Pro residue at position C'
+    c_prime_idx = i+j
+    if (len(pept) > c_prime_idx) and (pept[c_prime_idx] == 'P'):
+        energy[-1] = table_1_lacroix.loc[AA, 'Cc-2']
+
+    # Cc-1 	Normal C-cap values
+    else:
+        energy[-1] = table_1_lacroix.loc[AA, 'Cc-1']
 
     return energy
+
 
 def get_dG_Hbond(seq: str) -> float:
     """
