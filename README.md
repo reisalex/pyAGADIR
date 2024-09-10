@@ -71,16 +71,9 @@ dG_Int array (kcal/mol): [0.96 0.8  0.76 1.13 0.8  0.95 0.95 1.08 0.8  0.76 1.12
 
 ## To Do
 
-* Implement multiple-sequence approximation (Munoz, V., & Serrano, L. (1997))
-* Cythonize the model
+* Migrate to the Lacroix 1998 model
 * pytests
 
-## For developers
-
-Build package with build (see https://github.com/pypa/build)
-```
-python -m build
-```
 
 ## Citations
 
