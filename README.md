@@ -1,14 +1,17 @@
 # α-helix probability model (AGADIR)
 
+**This repository is a work in progress and currently does not produce correct predictions**
+
 An open-source, Python implementation of Munoz & Serrano's AGADIR model of α-helix formation. This model uses statistical mechanics and energy parameters trained on a database of over 400 peptides to predict the α-helical tendency (probability) per residue for a given peptide (see references).
 
 The energy parameters used in this model were extracted from Munoz, V., & Serrano, L. (1995). https://doi.org/10.1006/jmbi.1994.0023
 
 ## Install
 
-This package has been uploaded to the Python Package Index (PyPI (https://pypi.org/project/pyagadir/) and can be installed with:
-```
-pip install pyagadir
+Install the computational environment with Conda (https://conda.io).
+
+```bash
+conda env create -f environment.yml
 ```
 
 ## Usage
