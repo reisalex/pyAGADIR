@@ -93,10 +93,6 @@ def get_dG_Int(pept: str, i: int, j: int, pH: float = 7.0) -> np.ndarray:
     Returns:
         np.ndarray: The intrinsic free energy contributions for each amino acid in the sequence.
     """
-    is_valid_peptide_sequence(pept)
-    is_valid_index(pept, i, j)
-
-    # get the helix
     helix = get_helix(pept, i, j)
 
     # initialize energy array
@@ -146,34 +142,32 @@ def get_dG_Ncap(pept: str, i: int, j: int) -> np.ndarray:
     Returns:
         np.ndarray: The free energy contribution.
     """
-    is_valid_peptide_sequence(pept)
-    is_valid_index(pept, i, j)
-
-    # get the helix
     helix = get_helix(pept, i, j)
 
     # fix the blocking group names to match the table
-    AA = helix[0]
-    if AA in ['Z', 'X']:
-        AA = 'Ac'
+    Ncap_AA = helix[0]
+    if Ncap_AA in ['Z', 'X']:
+        Ncap_AA = 'Ac'
 
     energy = np.zeros(len(helix))
 
-    # Nc-4 	N-cap values when there is a Pro at position N1 and Glu, Asp or Gln at position N3.  
-    if helix[1] == 'P' and helix[3] in ['E', 'D', 'Q']:
-        energy[0] = table_1_lacroix.loc[AA, 'Nc-4']
+    # Nc-4 	N-cap values when there is a Pro at position N1 and Glu, Asp or Gln at position N3.
+    N1_AA = helix[1]
+    N3_AA = helix[3]
+    if N1_AA == 'P' and N3_AA in ['E', 'D', 'Q']:
+        energy[0] = table_1_lacroix.loc[Ncap_AA, 'Nc-4']
     
     # Nc-3 	N-cap values when there is a Glu, Asp or Gln at position N3.
-    elif helix[3] in ['E', 'D', 'Q']:
-        energy[0] = table_1_lacroix.loc[AA, 'Nc-3']
+    elif N3_AA in ['E', 'D', 'Q']:
+        energy[0] = table_1_lacroix.loc[Ncap_AA, 'Nc-3']
 
     # Nc-2 	N-cap values when there is a Pro at position N1.
-    elif helix[1] == 'P':
-        energy[0] = table_1_lacroix.loc[AA, 'Nc-2']
+    elif N1_AA == 'P':
+        energy[0] = table_1_lacroix.loc[Ncap_AA, 'Nc-2']
 
     # Nc-1 	Normal N-cap values.
     else:
-        energy[0] = table_1_lacroix.loc[AA, 'Nc-1']
+        energy[0] = table_1_lacroix.loc[Ncap_AA, 'Nc-1']
 
     return energy
 
@@ -190,27 +184,23 @@ def get_dG_Ccap(pept: str, i: int, j: int) -> np.ndarray:
     Returns:
         np.ndarray: The free energy contribution.
     """
-    is_valid_peptide_sequence(pept)
-    is_valid_index(pept, i, j)
-
-    # get the helix
     helix = get_helix(pept, i, j)
 
     # fix the blocking group names to match the table
-    AA = helix[-1]
-    if AA == 'B':
-        AA = 'Am'
+    Ccap_AA = helix[-1]
+    if Ccap_AA == 'B':
+        Ccap_AA = 'Am'
     
     energy = np.zeros(len(helix))
 
     # Cc-2 	C-cap values when there is a Pro residue at position C'
     c_prime_idx = i+j
     if (len(pept) > c_prime_idx) and (pept[c_prime_idx] == 'P'):
-        energy[-1] = table_1_lacroix.loc[AA, 'Cc-2']
+        energy[-1] = table_1_lacroix.loc[Ccap_AA, 'Cc-2']
 
     # Cc-1 	Normal C-cap values
     else:
-        energy[-1] = table_1_lacroix.loc[AA, 'Cc-1']
+        energy[-1] = table_1_lacroix.loc[Ccap_AA, 'Cc-1']
 
     return energy
 
@@ -229,10 +219,6 @@ def get_dG_staple(pept: str, i: int, j: int) -> float:
     Returns:
         float: The free energy contribution.
     """
-    is_valid_peptide_sequence(pept)
-    is_valid_index(pept, i, j)
-
-    # get the helix
     helix = get_helix(pept, i, j)
 
     energy = np.zeros(len(helix))
@@ -289,10 +275,6 @@ def get_dG_schellman(pept: str, i: int, j: int) -> float:
     Returns:
         float: The free energy contribution.
     """
-    is_valid_peptide_sequence(pept)
-    is_valid_index(pept, i, j)
-
-    # get the helix
     helix = get_helix(pept, i, j)
     energy = 0.0
 
@@ -352,15 +334,14 @@ def get_dG_i1(pept: str, i: int, j: int) -> np.ndarray:
     Returns:
         np.ndarray: The free energy contributions for each interaction.
     """
-    is_valid_peptide_sequence(pept)
-    is_valid_index(pept, i, j)
+    helix = get_helix(pept, i, j)
 
     # NOTE: the this is the "old" code from the other Agadir implementation, have not changed it yet. Unclear whether I should.
 
-    energy = np.zeros(len(pept))
-    for i in range(len(pept) - 1):
-        AAi = pept[i]
-        AAi1 = pept[i + 1]
+    energy = np.zeros(len(helix))
+    for idx in range(len(helix) - 1):
+        AAi = helix[idx]
+        AAi1 = helix[idx + 1]
         charge = 1
         for AA in [AAi, AAi1]:
             if AA in set(['R', 'H', 'K']):
@@ -370,7 +351,7 @@ def get_dG_i1(pept: str, i: int, j: int) -> np.ndarray:
             else:
                 charge = 0
                 break
-        energy[i] = 0.05 * charge if charge != 0 else 0.0
+        energy[idx] = 0.05 * charge if charge != 0 else 0.0
     return energy
 
 
@@ -386,16 +367,15 @@ def get_dG_i3(pept: str, i: int, j: int) -> np.ndarray:
     Returns:
         np.ndarray: The free energy contributions for each interaction.
     """
-    is_valid_peptide_sequence(pept)
-    is_valid_index(pept, i, j)
+    helix = get_helix(pept, i, j)
 
-    energy = np.zeros(len(pept))
+    energy = np.zeros(len(helix))
 
     # Get interaction free energies between non-charged residues
-    for i in range(len(pept) - 3):
-        AAi = pept[i]
-        AAi3 = pept[i + 3]
-        energy[i] = table_4a_lacroix.loc[AAi, AAi3] / 100
+    for idx in range(len(helix) - 3):
+        AAi = helix[idx]
+        AAi3 = helix[idx + 3]
+        energy[idx] = table_4a_lacroix.loc[AAi, AAi3] / 100
 
         # TODO: I have to add values from table 5 of the lacroix paper, depending on ionization state of the residues. But how to do this?
         # "The interaction free energies correspond to those between non-charged residues, or in the case of two residues that can be charged 
@@ -417,16 +397,15 @@ def get_dG_i4(pept: str, i: int, j: int) -> np.ndarray:
     Returns:
         np.ndarray: The free energy contributions for each interaction.
     """
-    is_valid_peptide_sequence(pept)
-    is_valid_index(pept, i, j)
+    helix = get_helix(pept, i, j)
 
-    energy = np.zeros(len(pept))
+    energy = np.zeros(len(helix))
 
     # Get interaction free energies between non-charged residues
-    for i in range(len(pept) - 4):
-        AAi = pept[i]
-        AAi4 = pept[i + 4]
-        energy[i] = table_4b_lacroix.loc[AAi, AAi4] / 100
+    for idx in range(len(helix) - 4):
+        AAi = helix[idx]
+        AAi4 = helix[idx + 4]
+        energy[idx] = table_4b_lacroix.loc[AAi, AAi4] / 100
 
         # TODO: I have to add values from table 5 of the lacroix paper, depending on ionization state of the residues. But how to do this?
         # "The interaction free energies correspond to those between non-charged residues, or in the case of two residues that can be charged 
