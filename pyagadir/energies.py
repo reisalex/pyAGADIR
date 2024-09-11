@@ -30,31 +30,34 @@ table_3_lacroix = pd.read_csv(
     sep='\t',
 ).astype(float)
 
-# load energy contributions between amino acids and the helix macrodipole, focusing on the C-terminal
-table3a = pd.read_csv(
-    datapath.joinpath('table3a.csv'),
-    index_col='AA',
-).astype(float)
-table3a.columns = table3a.columns.astype(int)
-
-# load energy contributions between amino acids and the helix macrodipole, focusing on the N-terminal
-table3b = pd.read_csv(
-    datapath.joinpath('table3b.csv'),
-    index_col='AA',
-).astype(float)
-table3b.columns = table3b.columns.astype(int)
-
 # load energy contributions for interactions between i and i+3
-table4a = pd.read_csv(
-    datapath.joinpath('table4a.csv'),
-    index_col='index',
+table_4a_lacroix = pd.read_csv(
+    datapath.joinpath('table_4a_lacroix.tsv'),
+    index_col='AA',
+    sep='\t',
 ).astype(float)
 
 # load energy contributions for interactions between i and i+4
-table4b = pd.read_csv(
-    datapath.joinpath('table4b.csv'),
-    index_col='index',
+table_4b_lacroix = pd.read_csv(
+    datapath.joinpath('table_4b_lacroix.tsv'),
+    index_col='AA',
+    sep='\t',
 ).astype(float)
+
+
+# # load energy contributions between amino acids and the helix macrodipole, focusing on the C-terminal
+# table3a = pd.read_csv(
+#     datapath.joinpath('table3a.csv'),
+#     index_col='AA',
+# ).astype(float)
+# table3a.columns = table3a.columns.astype(int)
+
+# # load energy contributions between amino acids and the helix macrodipole, focusing on the N-terminal
+# table3b = pd.read_csv(
+#     datapath.joinpath('table3b.csv'),
+#     index_col='AA',
+# ).astype(float)
+# table3b.columns = table3b.columns.astype(int)
 
 
 def get_helix(pept: str, i: int, j:int) -> str:
@@ -98,6 +101,8 @@ def get_dG_Int(pept: str, i: int, j: int, pH: float = 7.0) -> np.ndarray:
 
     # initialize energy array
     energy = np.zeros(len(helix))
+
+    # TODO ensure that the code below is correct
 
     # iterate over the helix and get the intrinsic energy for each residue
     for idx, AA in enumerate(helix):
@@ -291,6 +296,8 @@ def get_dG_schellman(pept: str, i: int, j: int) -> float:
     helix = get_helix(pept, i, j)
     energy = 0.0
 
+    # TODO verify that the code below is correct
+
     # C-cap residue has to be Gly
     if helix[-1] != 'G':
         print('no G cap for schellman')
@@ -308,10 +315,6 @@ def get_dG_schellman(pept: str, i: int, j: int) -> float:
     energy = table_3_lacroix.loc[C3_AA, C_prime_AA] / 100
 
     return energy
-
-
-
-
 
 
 def get_dG_Hbond(pept: str, i: int, j: int) -> float:
@@ -337,22 +340,27 @@ def get_dG_Hbond(pept: str, i: int, j: int) -> float:
     return energy
 
 
-def get_dG_i1(seq: str) -> np.ndarray:
+def get_dG_i1(pept: str, i: int, j: int) -> np.ndarray:
     """
     Get the free energy contribution for interaction between each AAi and AAi+1 in the sequence.
 
     Args:
-        seq (str): The protein sequence.
+        pept (str): The peptide sequence.
+        i (int): The helix start index, python 0-indexed.
+        j (int): The helix length.
 
     Returns:
         np.ndarray: The free energy contributions for each interaction.
     """
-    is_valid_peptide_sequence(seq)
+    is_valid_peptide_sequence(pept)
+    is_valid_index(pept, i, j)
 
-    energy = np.zeros(len(seq))
-    for i in range(len(seq) - 1):
-        AAi = seq[i]
-        AAi1 = seq[i + 1]
+    # NOTE: the this is the "old" code from the other Agadir implementation, have not changed it yet. Unclear whether I should.
+
+    energy = np.zeros(len(pept))
+    for i in range(len(pept) - 1):
+        AAi = pept[i]
+        AAi1 = pept[i + 1]
         charge = 1
         for AA in [AAi, AAi1]:
             if AA in set(['R', 'H', 'K']):
@@ -366,43 +374,65 @@ def get_dG_i1(seq: str) -> np.ndarray:
     return energy
 
 
-def get_dG_i3(seq: str) -> np.ndarray:
+def get_dG_i3(pept: str, i: int, j: int) -> np.ndarray:
     """
     Get the free energy contribution for interaction between each AAi and AAi+3 in the sequence.
 
     Args:
-        seq (str): The protein sequence.
+        pept (str): The peptide sequence.
+        i (int): The helix start index, python 0-indexed.
+        j (int): The helix length.
 
     Returns:
         np.ndarray: The free energy contributions for each interaction.
     """
-    is_valid_peptide_sequence(seq)   
+    is_valid_peptide_sequence(pept)
+    is_valid_index(pept, i, j)
 
-    energy = np.zeros(len(seq))
-    for i in range(len(seq) - 3):
-        AAi = seq[i]
-        AAi3 = seq[i + 3]
-        energy[i] = table4a.loc[AAi, AAi3]
+    energy = np.zeros(len(pept))
+
+    # Get interaction free energies between non-charged residues
+    for i in range(len(pept) - 3):
+        AAi = pept[i]
+        AAi3 = pept[i + 3]
+        energy[i] = table_4a_lacroix.loc[AAi, AAi3] / 100
+
+        # TODO: I have to add values from table 5 of the lacroix paper, depending on ionization state of the residues. But how to do this?
+        # "The interaction free energies correspond to those between non-charged residues, or in the case of two residues that can be charged 
+        # to those cases in which at least one of the two is non-charged (the interaction is scaled according to the population of charged and 
+        # neutral forms of the participating amino acids)."
+
     return energy
 
 
-def get_dG_i4(seq: str) -> np.ndarray:
+def get_dG_i4(pept: str, i: int, j: int) -> np.ndarray:
     """
     Get the free energy contribution for interaction between each AAi and AAi+4 in the sequence.
 
     Args:
-        seq (str): The protein sequence.
+        pept (str): The peptide sequence.
+        i (int): The helix start index, python 0-indexed.
+        j (int): The helix length.
 
     Returns:
         np.ndarray: The free energy contributions for each interaction.
     """
-    is_valid_peptide_sequence(seq)
+    is_valid_peptide_sequence(pept)
+    is_valid_index(pept, i, j)
 
-    energy = np.zeros(len(seq))
-    for i in range(len(seq) - 4):
-        AAi = seq[i]
-        AAi4 = seq[i + 4]
-        energy[i] = table4b.loc[AAi, AAi4]
+    energy = np.zeros(len(pept))
+
+    # Get interaction free energies between non-charged residues
+    for i in range(len(pept) - 4):
+        AAi = pept[i]
+        AAi4 = pept[i + 4]
+        energy[i] = table_4b_lacroix.loc[AAi, AAi4] / 100
+
+        # TODO: I have to add values from table 5 of the lacroix paper, depending on ionization state of the residues. But how to do this?
+        # "The interaction free energies correspond to those between non-charged residues, or in the case of two residues that can be charged 
+        # to those cases in which at least one of the two is non-charged (the interaction is scaled according to the population of charged and 
+        # neutral forms of the participating amino acids)."
+
     return energy
 
 

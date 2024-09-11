@@ -115,12 +115,12 @@ class AGADIR(object):
         """
         # intrinsic energies for the helical segment, excluding N- and C-terminal capping residues
         dG_Int = energies.get_dG_Int(seq, i, j)
-        assert len(dG_Int) == j, f'len(dG_Int) = {len(dG_Int)} != {j}'
 
         # "non-hydrogen bond" capping energies, only for the first and last residues of the helix
         dG_Ncap = energies.get_dG_Ncap(seq, i, j)
         dG_Ccap = energies.get_dG_Ccap(seq, i, j)
         dG_nonH = dG_Ncap + dG_Ccap
+        # TODO dG_nonH might need further adjustment, see page 175 in lacroix paper
 
         # get hydrophobic staple motif energies
         dG_staple = energies.get_dG_staple(seq, i, j)
@@ -132,11 +132,12 @@ class AGADIR(object):
         dG_Hbond = energies.get_dG_Hbond(seq, i, j)
 
         # # side-chain interactions, excluding N- and C-terminal capping residues
-        # dG_i1_tot = energies.get_dG_i1(seq, i, j)
-        # dG_i3_tot = energies.get_dG_i3(seq, i, j)
-        # dG_i4_tot = energies.get_dG_i4(seq, i, j)
-        # dG_SD = dG_i1_tot + dG_i3_tot + dG_i4_tot
+        dG_i1_tot = energies.get_dG_i1(seq, i, j)
+        dG_i3_tot = energies.get_dG_i3(seq, i, j)
+        dG_i4_tot = energies.get_dG_i4(seq, i, j)
+        dG_SD = dG_i1_tot + dG_i3_tot + dG_i4_tot
 
+        # TODO: figure out how the dipole is supposed to be calculated
         # # dipole interactions, excluding N- and C-terminal capping residues
         # # the nomenclature is that of Richardson & Richardson (1988).
         # dG_N_dipole, dG_C_dipole = energies.get_dG_dipole(seq, i, j)
@@ -149,24 +150,27 @@ class AGADIR(object):
         # make fancy printout *** for debugging and development
         for seq_idx, arr_idx in zip(range(i, i+j), range(j)):
             print(f'Helix: start= {i+1} end= {i+j}  length=  {j}')
-            print(f'residue index =     {seq_idx+1}')
+            print(f'residue index = {seq_idx+1}')
             print(f'residue = {seq[seq_idx]}')
-            print(f'g C term')
-            print(f'g N term')
-            print(f'g capping = {dG_nonH[arr_idx]:.4f}')
+            print(f'g C term = ')
+            print(f'g N term =')
+            print(f'g capping =   {dG_nonH[arr_idx]:.4f}')
             print(f'g intrinsic = {dG_Int[arr_idx]:.4f}')
-            print(f'g dipole')
-            print(f'gresidue')
+            print(f'g dipole = ')
+            print(f'gresidue = ')
             print('****************')
         print('Additional terms for helical segment')
+        print(f'i,i+3 and i,i+4 side chain-side chain interaction = {sum(dG_SD):.4f}')
         print(f'g staple = {dG_staple:.4f}')
         print(f'g schellman = {dG_schellman:.4f}')
         print(f'g hbond = {dG_Hbond:.4f}')
         print('==============================================')
 
-        # # sum all components
-        # dG_Hel = sum(dG_Int) + dG_Hbond + sum(dG_SD) + sum(dG_nonH) + sum(dG_dipole)
-        dG_Hel = sum(dG_Int) + sum(dG_nonH)
+        # sum all components
+        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond # + sum(dG_dipole) + sum(dG_electrostatic)
+
+
+        # TODO: do we need to return all these components? It was initally intended for the "ms" partition function calculation
 
         # dG_dict = {
         #     'dG_Helix': dG_Hel,
