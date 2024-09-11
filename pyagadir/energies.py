@@ -16,6 +16,13 @@ table_1_lacroix = pd.read_csv(
     sep='\t',
 ).astype(float)
 
+# load the hydrophobic staple motif energy contributions
+table_2_lacroix = pd.read_csv(
+    datapath.joinpath('table_2_lacroix.tsv'),
+    index_col='AA',
+    sep='\t',
+).astype(float)
+
 # load energy contributions between amino acids and the helix macrodipole, focusing on the C-terminal
 table3a = pd.read_csv(
     datapath.joinpath('table3a.csv'),
@@ -192,6 +199,77 @@ def get_dG_Ccap(pept: str, i: int, j: int) -> np.ndarray:
     # Cc-1 	Normal C-cap values
     else:
         energy[-1] = table_1_lacroix.loc[AA, 'Cc-1']
+
+    return energy
+
+
+def get_dG_staple(pept: str, i: int, j: int) -> np.ndarray:
+    """
+    Get the free energy contribution for the hydrophobic staple motif.
+    The hydrophobic interaction is between the N' and N4 residues of the helix.
+    See https://doi.org/10.1038/nsb0595-380 for more details.
+
+    Args:
+        pept (str): The peptide sequence.
+        i (int): The helix start index, python 0-indexed.
+        j (int): The helix length.
+
+    Returns:
+        np.ndarray: The free energy contribution.
+    """
+    is_valid_peptide_sequence(pept)
+    is_valid_index(pept, i, j)
+
+    # get the helix
+    helix = get_helix(pept, i, j)
+
+    energy = np.zeros(len(helix))
+
+    # get the amino acids governing the staple motif
+    N_prime_AA = pept[i-1]
+    Ncap_AA = helix[0]
+    N3_AA = helix[3]
+    N4_AA = helix[4]
+    energy = 0.0
+
+    # staple motif requires the N' residue before the Ncap, so the first residue of the helix cannot be the first residue of the peptide
+    if i == 0:
+        return energy
+
+    # TODO: verify that the code below is correct 
+
+    # The hydrophobic staple motif is only considered whenever the N-cap residue is Asn, Asp, Ser, Pro or Thr. 
+    if Ncap_AA in ['N', 'D', 'S', 'P', 'T']:
+        energy = table_2_lacroix.loc[N_prime_AA, N4_AA]
+
+        # whenever the N-cap residue is Asn, Asp, Ser, or Thr and the N3 residue is Glu, Asp or Gln, multiply by 1.0
+        if Ncap_AA in ['N', 'D', 'S', 'T'] and N3_AA in ['E', 'D', 'Q']:
+            print('staple case i')
+            energy *= 1.0
+
+        # whenever the N-cap residue is Asp or Asn and the N3 residue is Ser or Thr
+        elif Ncap_AA in ['N', 'D'] and N3_AA in ['S', 'T']:
+            print('staple case ii')
+            energy *= 1.0
+
+        # other cases they are multiplied by 0.5
+        else:
+            print('staple case iii')
+            energy *= 0.5
+
+    else:
+        print('no staple motif')
+        
+    return energy
+
+
+        
+
+
+    staple = helix[0] + helix[-1]
+
+    # get the staple energy
+    energy[0] = table_1_lacroix.loc[staple, 'Staple']
 
     return energy
 
