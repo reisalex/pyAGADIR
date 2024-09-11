@@ -23,6 +23,13 @@ table_2_lacroix = pd.read_csv(
     sep='\t',
 ).astype(float)
 
+# load the schellman motif energy contributions
+table_3_lacroix = pd.read_csv(
+    datapath.joinpath('table_3_lacroix.tsv'),
+    index_col='AA',
+    sep='\t',
+).astype(float)
+
 # load energy contributions between amino acids and the helix macrodipole, focusing on the C-terminal
 table3a = pd.read_csv(
     datapath.joinpath('table3a.csv'),
@@ -203,7 +210,7 @@ def get_dG_Ccap(pept: str, i: int, j: int) -> np.ndarray:
     return energy
 
 
-def get_dG_staple(pept: str, i: int, j: int) -> np.ndarray:
+def get_dG_staple(pept: str, i: int, j: int) -> float:
     """
     Get the free energy contribution for the hydrophobic staple motif.
     The hydrophobic interaction is between the N' and N4 residues of the helix.
@@ -215,7 +222,7 @@ def get_dG_staple(pept: str, i: int, j: int) -> np.ndarray:
         j (int): The helix length.
 
     Returns:
-        np.ndarray: The free energy contribution.
+        float: The free energy contribution.
     """
     is_valid_peptide_sequence(pept)
     is_valid_index(pept, i, j)
@@ -263,33 +270,68 @@ def get_dG_staple(pept: str, i: int, j: int) -> np.ndarray:
     return energy
 
 
-        
+def get_dG_schellman(pept: str, i: int, j: int) -> float:
+    """
+    Get the free energy contribution for the Schellman motif.
+    The Schellman motif is only considered whenever Gly is the C-cap residue,
+    where the interaction happens between the C' and C3 residues of the helix.
 
+    Args:
+        pept (str): The peptide sequence.
+        i (int): The helix start index, python 0-indexed.
+        j (int): The helix length.
 
-    staple = helix[0] + helix[-1]
+    Returns:
+        float: The free energy contribution.
+    """
+    is_valid_peptide_sequence(pept)
+    is_valid_index(pept, i, j)
 
-    # get the staple energy
-    energy[0] = table_1_lacroix.loc[staple, 'Staple']
+    # get the helix
+    helix = get_helix(pept, i, j)
+    energy = 0.0
+
+    # C-cap residue has to be Gly
+    if helix[-1] != 'G':
+        print('no G cap for schellman')
+        return energy
+
+    # there has to be a C' residue after the helix
+    if i+j >= len(pept):
+        print('no C prime for schellman')
+        return energy
+    
+    # get the amino acids governing the Schellman motif and extract the energy
+    print('detected schellman case')
+    C3_AA = helix[3]
+    C_prime_AA = pept[i+j]
+    energy = table_3_lacroix.loc[C3_AA, C_prime_AA] / 100
 
     return energy
 
 
-def get_dG_Hbond(seq: str) -> float:
+
+
+
+
+def get_dG_Hbond(pept: str, i: int, j: int) -> float:
     """
     Get the free energy contribution for hydrogen bonding for a sequence.
 
     Args:
-        seq (str): The protein sequence.
+        pept (str): The peptide sequence.
+        i (int): The helix start index, python 0-indexed.
+        j (int): The helix length.
 
     Returns:
         float: The total free energy contribution for hydrogen bonding in the sequence.
     """
-    is_valid_peptide_sequence(seq)
+    is_valid_peptide_sequence(pept)
+    is_valid_index(pept, i, j)
 
     # The first 4 helical amino acids are considered to have zero net enthalpy 
     # since they are nucleating residues and caps don't count, 
     # for a total of 6.
-    j = len(seq)
     energy = -0.775 * max((j - 6), 0)
 
     return energy

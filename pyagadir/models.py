@@ -122,8 +122,14 @@ class AGADIR(object):
         dG_Ccap = energies.get_dG_Ccap(seq, i, j)
         dG_nonH = dG_Ncap + dG_Ccap
 
-        # # calculate dG_Hbond for the helical segment here
-        # dG_Hbond = energies.get_dG_Hbond(seq, i, j)
+        # get hydrophobic staple motif energies
+        dG_staple = energies.get_dG_staple(seq, i, j)
+
+        # get schellman motif energies
+        dG_schellman = energies.get_dG_schellman(seq, i, j)
+
+        # calculate dG_Hbond for the helical segment here
+        dG_Hbond = energies.get_dG_Hbond(seq, i, j)
 
         # # side-chain interactions, excluding N- and C-terminal capping residues
         # dG_i1_tot = energies.get_dG_i1(seq, i, j)
@@ -140,10 +146,11 @@ class AGADIR(object):
         # # TODO: implement this
 
 
-        # make fancy printout
+        # make fancy printout *** for debugging and development
         for seq_idx, arr_idx in zip(range(i, i+j), range(j)):
-            print(f'start= {i+1} end= {i+j}  length=  {j}')
+            print(f'Helix: start= {i+1} end= {i+j}  length=  {j}')
             print(f'residue index =     {seq_idx+1}')
+            print(f'residue = {seq[seq_idx]}')
             print(f'g C term')
             print(f'g N term')
             print(f'g capping = {dG_nonH[arr_idx]:.4f}')
@@ -151,6 +158,10 @@ class AGADIR(object):
             print(f'g dipole')
             print(f'gresidue')
             print('****************')
+        print('Additional terms for helical segment')
+        print(f'g staple = {dG_staple:.4f}')
+        print(f'g schellman = {dG_schellman:.4f}')
+        print(f'g hbond = {dG_Hbond:.4f}')
         print('==============================================')
 
         # # sum all components
