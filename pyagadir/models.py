@@ -131,6 +131,11 @@ class AGADIR(object):
         # calculate dG_Hbond for the helical segment here
         dG_Hbond = energies.get_dG_Hbond(seq, i, j)
 
+        # calculate ddG (eq 12 in Lacroix)
+        alpha = 0.15
+        beta = 6.0
+        ddG = -alpha * (1 - np.exp(-beta * self.molarity))
+
         # # side-chain interactions, excluding N- and C-terminal capping residues
         dG_i1_tot = energies.get_dG_i1(seq, i, j)
         dG_i3_tot = energies.get_dG_i3(seq, i, j)
@@ -164,10 +169,11 @@ class AGADIR(object):
         print(f'g staple = {dG_staple:.4f}')
         print(f'g schellman = {dG_schellman:.4f}')
         print(f'g hbond = {dG_Hbond:.4f}')
+        print(f'delta delta g (eq 12) = {ddG:.4f}')
         print('==============================================')
 
         # sum all components
-        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond # + sum(dG_dipole) + sum(dG_electrostatic)
+        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + ddG # + sum(dG_dipole) + sum(dG_electrostatic)
 
 
         # TODO: do we need to return all these components? It was initally intended for the "ms" partition function calculation
@@ -237,9 +243,9 @@ class AGADIR(object):
                         dG_Hel += -0.1
 
                 # modify by ionic strength according to equation 12 of the paper
-                alpha = 0.15
-                beta = 6.0
-                dG_Hel += -alpha * (1 - np.exp(-beta * self.molarity))
+                # alpha = 0.15
+                # beta = 6.0
+                # dG_Hel += -alpha * (1 - np.exp(-beta * self.molarity))
 
                 # calculate the partition function K
                 K = self._calc_K(dG_Hel)
