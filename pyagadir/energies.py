@@ -317,7 +317,7 @@ def get_dG_Hbond(pept: str, i: int, j: int) -> float:
     # The first 4 helical amino acids are considered to have zero net enthalpy 
     # since they are nucleating residues and caps don't count, 
     # for a total of 6.
-    energy = -0.775 * max((j - 6), 0)
+    energy = -0.895 * max((j - 6), 0)
 
     return energy
 
