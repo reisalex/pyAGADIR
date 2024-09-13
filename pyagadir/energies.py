@@ -1,8 +1,10 @@
 
 from importlib.resources import files
+import math
+
 import numpy as np
 import pandas as pd
-from typing import List, Tuple, Dict
+
 from pyagadir.utils import is_valid_peptide_sequence, is_valid_index
 
 
@@ -445,3 +447,71 @@ def get_dG_dipole(seq: str) -> tuple[np.ndarray, np.ndarray]:
     dG_C_dipole = dG_C_dipole[::-1]
 
     return dG_N_dipole, dG_C_dipole
+
+
+def acidic_residue_ionization(pH, pKa):
+    """Degree of ionization indicates the fraction of molecules that
+    are protonated (neutral) vs. deprotonated (negatively charged).
+    Uses the Henderson-Hasselbalch equation to calculate the degree of ionization.
+    """
+    q_acid = 1 / (1 + 10**(pH - pKa))
+    return q_acid
+
+
+def basic_residue_ionization(pH, pKa):
+    """Degree of ionization indicates the fraction of molecules that
+    are protonated (positively charged) vs. deprotonated (neutral).
+    Uses the Henderson-Hasselbalch equation to calculate the degree of ionization.
+    """
+    q_base = 1 / (1 + 10**(pKa - pH))
+    return q_base
+
+
+def calculate_r(N):
+    """Function to calculate the distance r from the terminal to the helix
+    where N is the number of residues between the terminal and the helix.
+    """
+    r = 0.1 + N * 2
+    return r
+
+
+def debye_huckel_simple(ionic_strength, distance_r):
+    """Function to calculate the Debye-Huckel screening factor for electrostatic interactions
+    given the ionic strength and distance r from the helix. Uses the simplified Debye-Huckel equation.
+    which is valid for low ionic strength conditions in dilute solutions.
+    """
+    # Calculate the screening parameter kappa
+    kappa = 0.329 * math.sqrt(ionic_strength)
+    # Calculate the screening factor
+    screening_factor = math.exp(-kappa * distance_r)
+    return screening_factor
+
+
+def debye_huckel_full(distance_r, ionic_strength):
+    # Constants
+    epsilon_0 = 8.854e-12  # Permittivity of free space in C^2/(Nm^2)
+    epsilon_r = 80  # Relative permittivity (dielectric constant) of water
+    N_A = 6.022e23  # Avogadro's number in mol^-1
+    e = 1.602e-19  # Elementary charge in Coulombs
+    k_B = 1.38e-23  # Boltzmann constant in J/K
+    T = 273  # Temperature in Kelvin
+    # Convert distance from Ångströms to meters
+    distance_r = distance_r * 1e-10
+    # Calculate Debye screening parameter kappa
+    kappa = math.sqrt((2 * N_A * e**2 * ionic_strength) / (epsilon_0 * epsilon_r * k_B * T))
+    # Calculate the screening factor e^(-kappa * r)
+    screening_factor = math.exp(-kappa * distance_r)
+    return screening_factor
+
+
+def calculate_interaction_energy(q, mu_helix, distance_r, screening_factor):
+    """Function to calculate the interaction energy between charged termini and the helix dipole
+    q: degree of ionization (fraction of charged molecules)
+    mu_helix: helix dipole moment
+    distance_r: distance from the terminal to the helix
+    screening_factor: Debye-Huckel screening factor
+    """
+    energy = ((q * mu_helix) / distance_r) * screening_factor
+    return energy
+
+
