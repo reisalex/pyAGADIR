@@ -471,7 +471,8 @@ def calculate_r(N):
     """Function to calculate the distance r from the terminal to the helix
     where N is the number of residues between the terminal and the helix.
     """
-    r = 0.1 + N * 2
+    #TODO: find reference for this. 
+    r = 0.1 + (N+1) * 2
     return r
 
 
