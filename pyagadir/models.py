@@ -149,16 +149,15 @@ class AGADIR(object):
         # dG_dipole = dG_N_dipole + dG_C_dipole
 
         # # get electrostatic interactions
-        # # TODO: implement this
-
+        dG_N_term, dG_C_term = energies.get_dG_terminals(seq, i, j, self.M)
 
         # make fancy printout *** for debugging and development
         for seq_idx, arr_idx in zip(range(i, i+j), range(j)):
             print(f'Helix: start= {i+1} end= {i+j}  length=  {j}')
             print(f'residue index = {seq_idx+1}')
             print(f'residue = {seq[seq_idx]}')
-            print(f'g C term = ')
-            print(f'g N term =')
+            print(f'g N term = {dG_N_term[arr_idx]:.4f}')
+            print(f'g C term = {dG_C_term[arr_idx]:.4f}')
             print(f'g capping =   {dG_nonH[arr_idx]:.4f}')
             print(f'g intrinsic = {dG_Int[arr_idx]:.4f}')
             print(f'g dipole = ')

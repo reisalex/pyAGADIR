@@ -515,3 +515,28 @@ def calculate_interaction_energy(q, mu_helix, distance_r, screening_factor):
     return energy
 
 
+def get_dG_terminals(pept: str, i: int, j: int, ionic_strength: float) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Get the interaction energy for each residue with the N and C terminals
+    """
+    mu_helix = 0.5
+    qKaN = 3.75
+    qKaC = 7.88
+    helix = get_helix(pept, i, j)
+    N_term = np.zeros(len(helix))
+    C_term = np.zeros(len(helix))
+    # N terminal
+    residue = helix[0]
+    distance_r = calculate_r(i) # Distance to N terminal
+    screening_factor = debye_huckel_full(distance_r, ionic_strength)
+    N_term_energy = calculate_interaction_energy(qKaN, mu_helix, distance_r, screening_factor)
+    N_term[0] = N_term_energy
+    # C terminal
+    residue = helix[-1]
+    distance_r = calculate_r(len(pept)-(i+j)) # Distance to C terminal
+    screening_factor = debye_huckel_full(distance_r, ionic_strength)
+    C_term_energy = calculate_interaction_energy(qKaC, mu_helix, distance_r, screening_factor)
+    C_term[-1] = C_term_energy
+    return N_term, C_term
+   
+
