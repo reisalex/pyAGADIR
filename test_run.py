@@ -38,8 +38,16 @@ parser.add_argument(
     default=0.1
 )
 
+parser.add_argument(
+    '-pH', '--pH',
+    type=float,
+    required=False,
+    help="pH value",
+    default=7.0
+)
+
 args = parser.parse_args()
 
-model = AGADIR(method=args.method, T=args.temperature, M=args.ionic_strength)
+model = AGADIR(method=args.method, T=args.temperature, M=args.ionic_strength, pH=args.pH)
 result = model.predict(args.peptide)
 print(result)

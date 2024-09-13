@@ -71,7 +71,7 @@ class AGADIR(object):
     AGADIR class for predicting helical propensity using AGADIR method.
     """
 
-    def __init__(self, method: str = '1s', T: float = 4.0, M: float = 0.15):
+    def __init__(self, method: str = '1s', T: float = 4.0, M: float = 0.15, pH: float = 7.0):
         """
         Initialize AGADIR object.
 
@@ -94,6 +94,7 @@ class AGADIR(object):
         self._method = method
         self.T = T
         self.molarity = M
+        self.pH = pH
 
         self.has_acetyl = False
         self.has_succinyl = False
@@ -149,7 +150,7 @@ class AGADIR(object):
         # dG_dipole = dG_N_dipole + dG_C_dipole
 
         # # get electrostatic interactions
-        dG_N_term, dG_C_term = energies.get_dG_terminals(seq, i, j, self.M)
+        dG_N_term, dG_C_term = energies.get_dG_terminals(seq, i, j, self.molarity, self.pH)
 
         # make fancy printout *** for debugging and development
         for seq_idx, arr_idx in zip(range(i, i+j), range(j)):
