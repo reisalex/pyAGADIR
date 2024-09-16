@@ -470,6 +470,7 @@ def basic_residue_ionization(pH, pKa):
 def calculate_r(N):
     """Function to calculate the distance r from the terminal to the helix
     where N is the number of residues between the terminal and the helix.
+    p. 177 of Lacroix, 1998. Distances as 2.1, 4.1, 6.1...
     """
     r = 0.1 + N * 2
     return r
