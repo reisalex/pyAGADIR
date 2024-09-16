@@ -472,21 +472,8 @@ def calculate_r(N):
     where N is the number of residues between the terminal and the helix.
     p. 177 of Lacroix, 1998. Distances as 2.1, 4.1, 6.1...
     """
-    #TODO: find reference for this. 
     r = 0.1 + (N+1) * 2
     return r
-
-
-def debye_huckel_simple(ionic_strength, distance_r):
-    """Function to calculate the Debye-Huckel screening factor for electrostatic interactions
-    given the ionic strength and distance r from the helix. Uses the simplified Debye-Huckel equation.
-    which is valid for low ionic strength conditions in dilute solutions.
-    """
-    # Calculate the screening parameter kappa
-    kappa = 0.329 * math.sqrt(ionic_strength)
-    # Calculate the screening factor
-    screening_factor = math.exp(-kappa * distance_r)
-    return screening_factor
 
 
 def debye_huckel_full(distance_r, ionic_strength):
