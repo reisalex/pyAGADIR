@@ -149,7 +149,7 @@ class AGADIR(object):
         # dG_N_dipole, dG_C_dipole = energies.get_dG_dipole(seq, i, j)
         # dG_dipole = dG_N_dipole + dG_C_dipole
 
-        # # get electrostatic interactions
+        # get electrostatic interactions between N- and C-terminal capping charges and the helix macrodipole
         dG_N_term, dG_C_term = energies.get_dG_terminals(seq, i, j, self.molarity, self.pH)
 
         # make fancy printout *** for debugging and development
