@@ -92,10 +92,10 @@ class AGADIR(object):
             "
             )
         self._method = method
-        self.T = T
+        self.T = T + 273.15
         self.molarity = M
         self.pH = pH
-
+ 
         self.has_acetyl = False
         self.has_succinyl = False
         self.has_amide = False
@@ -214,8 +214,7 @@ class AGADIR(object):
             float: The equilibrium constant K.
         """
         R = 1.987204258e-3 # kcal/mol/K
-        RT = R * (self.T + 273.15)
-        return np.exp(-dG_Hel / RT)
+        return np.exp(-dG_Hel / (R * self.T))
 
     def _calc_partition_fxn(self) -> None:
         """

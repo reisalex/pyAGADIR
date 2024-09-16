@@ -48,7 +48,7 @@ table_4b_lacroix = pd.read_csv(
 
 # load pKa values for for side chain ionization and the N- and C-terminal capping groups
 pka_values = pd.read_csv(
-    datapath.joinpath('pka_values.csv'),
+    datapath.joinpath('pka_values.tsv'),
     index_col='AA',
     sep='\t',
 ).astype(float)
@@ -586,7 +586,7 @@ def get_dG_terminals(pept: str, i: int, j: int, ionic_strength: float, pH: float
     qKaC = pka_values.loc['Cterm', 'pKa']
     q = 1 - acidic_residue_ionization(pH, qKaC)  # TODO: ?
     distance_r = calculate_r(len(pept) - (i + j))  # Distance to C terminal
-    screening_factor = debye_huckel_full(distance_r, ionic_strength)
+    screening_factor = debye_huckel_full(distance_r, ionic_strength, T)
     C_term_energy = calculate_interaction_energy(q, mu_helix, distance_r, screening_factor)
     C_term[-1] = C_term_energy
     return N_term, C_term
