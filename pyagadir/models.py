@@ -174,12 +174,13 @@ class AGADIR(object):
         print(f'g schellman = {dG_schellman:.4f}')
         print(f'main chain-main chain H-bonds = {dG_Hbond:.4f}')
         print(f'ionic strngth corr. from eq. 12 {dG_ionic:.4f}')
-        print(f'total Helix free energy = {dG_Hel:.4f}')
-        print('==============================================')
+
 
         # sum all components
         dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + dG_ionic # + sum(dG_dipole) + sum(dG_electrostatic)
 
+        print(f'total Helix free energy = {dG_Hel:.4f}')
+        print('==============================================')
 
         # TODO: do we need to return all these components? It was initally intended for the "ms" partition function calculation
 
