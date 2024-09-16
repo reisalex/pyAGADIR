@@ -499,7 +499,9 @@ def debye_huckel_full(distance_r, ionic_strength):
     T = 273  # Temperature in Kelvin
     # Convert distance from Ångströms to meters
     distance_r = distance_r * 1e-10
-    # Calculate Debye screening parameter kappa
+    #convert ionic strength to mol/m**3
+    ionic_strength =  ionic_strength*1000
+    # Calculate Debye screening parameter kappa,
     kappa = math.sqrt((2 * N_A * e**2 * ionic_strength) / (epsilon_0 * epsilon_r * k_B * T))
     # Calculate the screening factor e^(-kappa * r)
     screening_factor = math.exp(-kappa * distance_r)
