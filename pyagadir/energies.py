@@ -62,7 +62,7 @@ table_4b_lacroix = pd.read_csv(
 
 def get_helix(pept: str, i: int, j:int) -> str:
     """
-    Get the helix region of a peptide sequence.
+    Get the helix region of a peptide sequence, including the N- and C-caps.
 
     Args:
         pept (str): The peptide sequence.
@@ -317,7 +317,7 @@ def get_dG_Hbond(pept: str, i: int, j: int) -> float:
     # The first 4 helical amino acids are considered to have zero net enthalpy 
     # since they are nucleating residues and caps don't count, 
     # for a total of 6.
-    energy = -0.775 * max((j - 6), 0)
+    energy = -0.895 * max((j - 6), 0) # value from discussion section of the 1998 lacroix paper
 
     return energy
 
@@ -337,6 +337,7 @@ def get_dG_i1(pept: str, i: int, j: int) -> np.ndarray:
     helix = get_helix(pept, i, j)
 
     # NOTE: the this is the "old" code from the other Agadir implementation, have not changed it yet. Unclear whether I should.
+    # TODO: Do we need to update this code?
 
     energy = np.zeros(len(helix))
     for idx in range(len(helix) - 1):
