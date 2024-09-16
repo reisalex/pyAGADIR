@@ -1,8 +1,10 @@
 
 from importlib.resources import files
+import math
+
 import numpy as np
 import pandas as pd
-from typing import List, Tuple, Dict
+
 from pyagadir.utils import is_valid_peptide_sequence, is_valid_index
 
 
@@ -40,6 +42,13 @@ table_4a_lacroix = pd.read_csv(
 # load energy contributions for interactions between i and i+4
 table_4b_lacroix = pd.read_csv(
     datapath.joinpath('table_4b_lacroix.tsv'),
+    index_col='AA',
+    sep='\t',
+).astype(float)
+
+# load pKa values for for side chain ionization and the N- and C-terminal capping groups
+pka_values = pd.read_csv(
+    datapath.joinpath('pka_values.tsv'),
     index_col='AA',
     sep='\t',
 ).astype(float)
@@ -446,3 +455,141 @@ def get_dG_dipole(seq: str) -> tuple[np.ndarray, np.ndarray]:
     dG_C_dipole = dG_C_dipole[::-1]
 
     return dG_N_dipole, dG_C_dipole
+
+
+def acidic_residue_ionization(pH: float, pKa: float) -> float:
+    """Degree of ionization indicates the fraction of molecules that
+    are protonated (neutral) vs. deprotonated (negatively charged).
+    Uses the Henderson-Hasselbalch equation to calculate the degree of ionization.
+
+    Args:
+        pH (float): The pH of the solution.
+        pKa (float): The pKa value of the acidic residue.
+
+    Returns:
+        float: The degree of ionization.
+    """
+    q_acid = 1 / (1 + 10**(pH - pKa))
+    return q_acid
+
+
+def basic_residue_ionization(pH: float, pKa: float) -> float:
+    """Degree of ionization indicates the fraction of molecules that
+    are protonated (positively charged) vs. deprotonated (neutral).
+    Uses the Henderson-Hasselbalch equation to calculate the degree of ionization.
+
+    Args:
+        pH (float): The pH of the solution.
+        pKa (float): The pKa value of the basic residue.
+
+    Returns:
+        float: The degree of ionization.
+    """
+    q_base = 1 / (1 + 10**(pKa - pH))
+    return q_base
+
+
+def calculate_r(N: int) -> float:
+    """Function to calculate the distance r from the terminal to the helix
+    where N is the number of residues between the terminal and the helix.
+    p. 177 of Lacroix, 1998. Distances as 2.1, 4.1, 6.1...
+
+    Args:
+        N (int): The number of residues between the terminal and the helix.
+
+    Returns:
+        float: The calculated distance r.
+    """
+    r = 0.1 + (N+1) * 2
+    return r
+
+def debye_huckel_full(distance_r: float, ionic_strength: float, T: int) -> float:
+    """Calculate the Debye-Huckel screening factor.
+
+    Args:
+        distance_r (float): Distance from the terminal to the helix in Ångströms.
+        ionic_strength (float): Ionic strength of the solution in mol/L.
+        T (int): Temperature in Kelvin.
+
+    Returns:
+        float: The Debye-Huckel screening factor.
+    """
+    # Constants
+    epsilon_0 = 8.854e-12  # Permittivity of free space in C^2/(Nm^2)
+    epsilon_r = 80  # Relative permittivity (dielectric constant) of water
+    N_A = 6.022e23  # Avogadro's number in mol^-1
+    e = 1.602e-19  # Elementary charge in Coulombs
+    k_B = 1.38e-23  # Boltzmann constant in J/K
+
+    # Convert distance from Ångströms to meters
+    distance_r = distance_r * 1e-10
+
+    # Convert ionic strength to mol/m**3
+    ionic_strength = ionic_strength * 1000
+
+    # Calculate Debye screening parameter kappa
+    kappa = math.sqrt((2 * N_A * e**2 * ionic_strength) / (epsilon_0 * epsilon_r * k_B * T))
+
+    # Calculate the screening factor e^(-kappa * r)
+    screening_factor = math.exp(-kappa * distance_r)
+    return screening_factor
+
+
+def calculate_interaction_energy(q: float, mu_helix: float, distance_r: float, screening_factor: float) -> float:
+    """Calculate the interaction energy between charged termini and the helix dipole.
+
+    Args:
+        q (float): Degree of ionization (fraction of charged molecules).
+        mu_helix (float): Helix dipole moment.
+        distance_r (float): Distance from the terminal to the helix.
+        screening_factor (float): Debye-Huckel screening factor.
+
+    Returns:
+        float: The interaction energy.
+    """
+    energy = ((q * mu_helix) / distance_r) * screening_factor
+    return energy
+
+
+def get_dG_terminals(pept: str, i: int, j: int, ionic_strength: float, pH: float, T: int) -> tuple[np.ndarray, np.ndarray]:
+    """Get the interaction energy for each residue with the N and C terminals.
+
+    Args:
+        pept (str): Peptide sequence.
+        i (int): Starting index of the helix segment.
+        j (int): Length of the helix segment.
+        ionic_strength (float): Ionic strength of the solution.
+        pH (float): pH of the solution.
+        T (int): Temperature in Kelvin.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Interaction energies for N and C terminals.
+    """
+    mu_helix = 0.5
+    helix = get_helix(pept, i, j)
+    N_term = np.zeros(len(helix))
+    C_term = np.zeros(len(helix))
+
+    # N terminal
+    residue = helix[0]
+    # TODO: Add values for each aa
+    qKaN = pka_values.loc['Nterm', 'pKa']
+    q = 1 - basic_residue_ionization(pH, qKaN)  # TODO: ?
+    distance_r = calculate_r(i)  # Distance to N terminal
+    screening_factor = debye_huckel_full(distance_r, ionic_strength, T)
+    N_term_energy = calculate_interaction_energy(q, mu_helix, distance_r, screening_factor)
+    N_term[0] = N_term_energy
+
+    # C terminal
+    residue = helix[-1]
+    # TODO: Add values for each aa
+    qKaC = pka_values.loc['Cterm', 'pKa']
+    q = 1 - acidic_residue_ionization(pH, qKaC)  # TODO: ?
+    distance_r = calculate_r(len(pept) - (i + j))  # Distance to C terminal
+    screening_factor = debye_huckel_full(distance_r, ionic_strength, T)
+    C_term_energy = calculate_interaction_energy(q, mu_helix, distance_r, screening_factor)
+    C_term[-1] = C_term_energy
+    return N_term, C_term
+
+   
+

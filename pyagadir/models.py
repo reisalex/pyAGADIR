@@ -71,7 +71,7 @@ class AGADIR(object):
     AGADIR class for predicting helical propensity using AGADIR method.
     """
 
-    def __init__(self, method: str = '1s', T: float = 4.0, M: float = 0.15):
+    def __init__(self, method: str = '1s', T: float = 4.0, M: float = 0.15, pH: float = 7.0):
         """
         Initialize AGADIR object.
 
@@ -92,9 +92,10 @@ class AGADIR(object):
             "
             )
         self._method = method
-        self.T = T
+        self.T = T + 273.15
         self.molarity = M
-
+        self.pH = pH
+ 
         self.has_acetyl = False
         self.has_succinyl = False
         self.has_amide = False
@@ -148,8 +149,8 @@ class AGADIR(object):
         # dG_N_dipole, dG_C_dipole = energies.get_dG_dipole(seq, i, j)
         # dG_dipole = dG_N_dipole + dG_C_dipole
 
-        # # get electrostatic interactions
-        # # TODO: implement this
+        # get electrostatic interactions between N- and C-terminal capping charges and the helix macrodipole
+        dG_N_term, dG_C_term = energies.get_dG_terminals(seq, i, j, self.molarity, self.pH, self.T)
 
         # modify by ionic strength according to equation 12 of the paper
         alpha = 0.15
@@ -161,8 +162,8 @@ class AGADIR(object):
             print(f'Helix: start= {i+1} end= {i+j}  length=  {j}')
             print(f'residue index = {seq_idx+1}')
             print(f'residue = {seq[seq_idx]}')
-            print(f'g C term = ')
-            print(f'g N term =')
+            print(f'g N term = {dG_N_term[arr_idx]:.4f}')
+            print(f'g C term = {dG_C_term[arr_idx]:.4f}')
             print(f'g capping =   {dG_nonH[arr_idx]:.4f}')
             print(f'g intrinsic = {dG_Int[arr_idx]:.4f}')
             print(f'g dipole = ')
@@ -177,7 +178,7 @@ class AGADIR(object):
 
 
         # sum all components
-        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + dG_ionic # + sum(dG_dipole) + sum(dG_electrostatic)
+        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + dG_ionic + sum(dG_N_term) + sum(dG_C_term) # + sum(dG_dipole) + sum(dG_electrostatic)
 
         print(f'total Helix free energy = {dG_Hel:.4f}')
         print('==============================================')
@@ -213,8 +214,7 @@ class AGADIR(object):
             float: The equilibrium constant K.
         """
         R = 1.987204258e-3 # kcal/mol/K
-        RT = R * (self.T + 273.15)
-        return np.exp(-dG_Hel / RT)
+        return np.exp(-dG_Hel / (R * self.T))
 
     def _calc_partition_fxn(self) -> None:
         """
