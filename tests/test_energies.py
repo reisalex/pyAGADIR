@@ -1,8 +1,5 @@
 import pytest
-from pyagadir.models import AGADIR
-from pyagadir.models import calc_K
-from pyagadir.models import get_dG_dipole, get_dG_Int, get_dG_i1, get_dG_i3, get_dG_i4, get_dG_Ncap, get_dG_Ccap, get_dG_Hbond
-
+from pyagadir.energies import get_dG_dipole, get_dG_Int, get_dG_i1, get_dG_i3, get_dG_i4, get_dG_Ncap, get_dG_Ccap, get_dG_Hbond
 import numpy as np
 import pandas as pd
 from importlib.resources import files
@@ -42,11 +39,6 @@ table4b = pd.read_csv(
     index_col='index',
 ).astype(float)
 
-
-def get_hprob_from_energy(energy):
-    """Get the helix probability from the energy.
-    """
-    return calc_K(energy) / (1 + calc_K(energy))
 
 
 def test_dG_Int():

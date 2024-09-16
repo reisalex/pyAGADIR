@@ -151,6 +151,10 @@ class AGADIR(object):
         # # get electrostatic interactions
         # # TODO: implement this
 
+        # modify by ionic strength according to equation 12 of the paper
+        alpha = 0.15
+        beta = 6.0
+        dG_ionic = -alpha * (1 - np.exp(-beta * self.molarity))
 
         # make fancy printout *** for debugging and development
         for seq_idx, arr_idx in zip(range(i, i+j), range(j)):
@@ -168,13 +172,15 @@ class AGADIR(object):
         print(f'i,i+3 and i,i+4 side chain-side chain interaction = {sum(dG_SD):.4f}')
         print(f'g staple = {dG_staple:.4f}')
         print(f'g schellman = {dG_schellman:.4f}')
-        print(f'g hbond = {dG_Hbond:.4f}')
-        print(f'delta delta g (eq 12) = {ddG:.4f}')
-        print('==============================================')
+        print(f'main chain-main chain H-bonds = {dG_Hbond:.4f}')
+        print(f'ionic strngth corr. from eq. 12 {dG_ionic:.4f}')
+
 
         # sum all components
-        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + ddG # + sum(dG_dipole) + sum(dG_electrostatic)
+        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + dG_ionic # + sum(dG_dipole) + sum(dG_electrostatic)
 
+        print(f'total Helix free energy = {dG_Hel:.4f}')
+        print('==============================================')
 
         # TODO: do we need to return all these components? It was initally intended for the "ms" partition function calculation
 
@@ -224,28 +230,24 @@ class AGADIR(object):
                 # calculate dG_Hel and dG_dict
                 dG_Hel, dG_dict = self._calc_dG_Hel(seq=self.result.seq, i=i, j=j)
 
-                # Add acetylation and amidation effects.
-                # These are only considered for the first and last residues of the helix, 
-                # and only if the peptide has been created in a way that they are present.
-                if i == 0 and self.has_acetyl is True:
-                    dG_Hel += -1.275
-                    if self.result.seq[0] == 'A':
-                        dG_Hel += -0.1
+                # TODO: these shuld be accounted for in the new table 1, verify this!
+                # # Add acetylation and amidation effects.
+                # # These are only considered for the first and last residues of the helix, 
+                # # and only if the peptide has been created in a way that they are present.
+                # if i == 0 and self.has_acetyl is True:
+                #     dG_Hel += -1.275
+                #     if self.result.seq[0] == 'A':
+                #         dG_Hel += -0.1
 
-                elif i == 0 and self.has_succinyl is True:
-                    dG_Hel += -1.775
-                    if self.result.seq[0] == 'A':
-                        dG_Hel += -0.1
+                # elif i == 0 and self.has_succinyl is True:
+                #     dG_Hel += -1.775
+                #     if self.result.seq[0] == 'A':
+                #         dG_Hel += -0.1
 
-                if (i + j == len(self.result.seq)) and (self.has_amide is True):
-                    dG_Hel += -0.81
-                    if self.result.seq[-1] == 'A':
-                        dG_Hel += -0.1
-
-                # modify by ionic strength according to equation 12 of the paper
-                # alpha = 0.15
-                # beta = 6.0
-                # dG_Hel += -alpha * (1 - np.exp(-beta * self.molarity))
+                # if (i + j == len(self.result.seq)) and (self.has_amide is True):
+                #     dG_Hel += -0.81
+                #     if self.result.seq[-1] == 'A':
+                #         dG_Hel += -0.1
 
                 # calculate the partition function K
                 K = self._calc_K(dG_Hel)
