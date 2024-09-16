@@ -131,6 +131,11 @@ class AGADIR(object):
         # calculate dG_Hbond for the helical segment here
         dG_Hbond = energies.get_dG_Hbond(seq, i, j)
 
+        # calculate ddG (eq 12 in Lacroix)
+        alpha = 0.15
+        beta = 6.0
+        ddG = -alpha * (1 - np.exp(-beta * self.molarity))
+
         # # side-chain interactions, excluding N- and C-terminal capping residues
         dG_i1_tot = energies.get_dG_i1(seq, i, j)
         dG_i3_tot = energies.get_dG_i3(seq, i, j)
@@ -146,14 +151,10 @@ class AGADIR(object):
         # # get electrostatic interactions
         # # TODO: implement this
 
-        # sum all components
-        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond # + sum(dG_dipole) + sum(dG_electrostatic)
-
         # modify by ionic strength according to equation 12 of the paper
         alpha = 0.15
         beta = 6.0
         dG_ionic = -alpha * (1 - np.exp(-beta * self.molarity))
-        dG_Hel += dG_ionic
 
         # make fancy printout *** for debugging and development
         for seq_idx, arr_idx in zip(range(i, i+j), range(j)):
@@ -176,7 +177,8 @@ class AGADIR(object):
         print(f'total Helix free energy = {dG_Hel:.4f}')
         print('==============================================')
 
-
+        # sum all components
+        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + dG_ionic # + sum(dG_dipole) + sum(dG_electrostatic)
 
 
         # TODO: do we need to return all these components? It was initally intended for the "ms" partition function calculation
