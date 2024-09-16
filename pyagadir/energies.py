@@ -472,7 +472,8 @@ def calculate_r(N):
     where N is the number of residues between the terminal and the helix.
     p. 177 of Lacroix, 1998. Distances as 2.1, 4.1, 6.1...
     """
-    r = 0.1 + N * 2
+    #TODO: find reference for this. 
+    r = 0.1 + (N+1) * 2
     return r
 
 
