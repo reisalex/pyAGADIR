@@ -516,7 +516,7 @@ def debye_huckel_full(distance_r: float, ionic_strength: float, T: int) -> float
     """
     # Constants
     epsilon_0 = 8.854e-12  # Permittivity of free space in C^2/(Nm^2)
-    epsilon_r = 80  # Relative permittivity (dielectric constant) of water
+    epsilon_r = 88.  # Relative permittivity (dielectric constant) of water at 273 K
     N_A = 6.022e23  # Avogadro's number in mol^-1
     e = 1.602e-19  # Elementary charge in Coulombs
     k_B = 1.38e-23  # Boltzmann constant in J/K
@@ -547,7 +547,7 @@ def calculate_interaction_energy(q: float, mu_helix: float, distance_r: float, s
     Returns:
         float: The interaction energy.
     """
-    energy = ((q * mu_helix) / distance_r) * screening_factor
+    energy = ((q * mu_helix) / distance_r) * screening_factor*3.772727
     return energy
 
 
@@ -577,7 +577,10 @@ def get_dG_terminals(pept: str, i: int, j: int, ionic_strength: float, pH: float
     q = 1 - basic_residue_ionization(pH, qKaN)  # TODO: ?
     distance_r = calculate_r(i)  # Distance to N terminal
     screening_factor = debye_huckel_full(distance_r, ionic_strength, T)
+    print("screening factor", screening_factor)
+    q = 0.64669
     N_term_energy = calculate_interaction_energy(q, mu_helix, distance_r, screening_factor)
+    print("N_term_energy", N_term_energy)
     N_term[0] = N_term_energy
 
     # C terminal
