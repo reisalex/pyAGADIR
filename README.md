@@ -77,10 +77,16 @@ dG_Int array (kcal/mol): [0.96 0.8  0.76 1.13 0.8  0.95 0.95 1.08 0.8  0.76 1.12
 > percent_helix      :: mean helical propensity, or probability of peptide is an alpha-helix (float)
 ```
 
-## To Do
+## Questions / To Do
 
-* Migrate to the Lacroix 1998 model
-* pytests
+* How is the i+1 term supposed to be calculated?
+* How do we add charge interactions in the i+3 and i+4 terms? Potental duplication of electrostatics term?
+* Why is capping 0.5 for Ala on C-terminal instead of 0.4?
+* Why is capping 0.45 for Gly on C-terminal instead of 0.0?
+* Test correct functioning of staple term or schellman term.
+* We need to locate a source for the N- and C-terminal values for the individual amino acids. Currently using average value from Stryer.
+* Calcualte water dielectric constant from temperature.
+* Update pytests to fit new model.
 
 
 ## Citations
