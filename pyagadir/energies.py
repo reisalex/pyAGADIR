@@ -46,6 +46,34 @@ table_4b_lacroix = pd.read_csv(
     sep='\t',
 ).astype(float)
 
+# load sidechain distances for helices
+table_6_helix_lacroix = pd.read_csv(
+    datapath.joinpath('table_6_helix_lacroix.tsv'),
+    index_col='Pos',
+    sep='\t',
+).astype(float)
+
+# load sidechain distances for coils
+table_6_coil_lacroix = pd.read_csv(
+    datapath.joinpath('table_6_coil_lacroix.tsv'),
+    index_col='Pos',
+    sep='\t',
+).astype(float)
+
+# load N-terminal distances between charged amino acids and the half charge from the helix macrodipole
+table_7_ccap_lacroix = pd.read_csv(
+    datapath.joinpath('table_7_Ccap_lacroix.tsv'),
+    index_col='AA',
+    sep='\t',
+).astype(float)
+
+# load C-terminal distances between charged amino acids and the half charge from the helix macrodipole
+table_7_ncap_lacroix = pd.read_csv(
+    datapath.joinpath('table_7_Ncap_lacroix.tsv'),
+    index_col='AA',
+    sep='\t',
+).astype(float)
+
 # load pKa values for for side chain ionization and the N- and C-terminal capping groups
 pka_values = pd.read_csv(
     datapath.joinpath('pka_values.tsv'),
