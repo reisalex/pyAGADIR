@@ -135,7 +135,6 @@ class AGADIR(object):
         # calculate ddG (eq 12 in Lacroix)
         alpha = 0.15
         beta = 6.0
-        ddG = -alpha * (1 - np.exp(-beta * self.molarity))
 
         # # side-chain interactions, excluding N- and C-terminal capping residues
         dG_i1_tot = energies.get_dG_i1(seq, i, j)
@@ -151,6 +150,8 @@ class AGADIR(object):
 
         # get electrostatic interactions between N- and C-terminal capping charges and the helix macrodipole
         dG_N_term, dG_C_term = energies.get_dG_terminals(seq, i, j, self.molarity, self.pH, self.T)
+        # 
+        dG_electrost = energies.get_dG_electrost(seq, i, j, self.molarity, self.pH, self.T)
 
         # modify by ionic strength according to equation 12 of the paper
         alpha = 0.15
@@ -173,6 +174,7 @@ class AGADIR(object):
         print(f'i,i+3 and i,i+4 side chain-side chain interaction = {sum(dG_SD):.4f}')
         print(f'g staple = {dG_staple:.4f}')
         print(f'g schellman = {dG_schellman:.4f}')
+        print(f'dG_electrost = {dG_electrost:.4f}')
         print(f'main chain-main chain H-bonds = {dG_Hbond:.4f}')
         print(f'ionic strngth corr. from eq. 12 {dG_ionic:.4f}')
 

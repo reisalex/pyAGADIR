@@ -1,5 +1,6 @@
 
 from importlib.resources import files
+from itertools import combinations
 import math
 
 import numpy as np
@@ -636,5 +637,56 @@ def get_dG_terminals(pept: str, i: int, j: int, ionic_strength: float, pH: float
     #print(f"{C_term_energy=}")   
     return N_term, C_term
 
-   
 
+def find_charged_pairs(seq: str) -> list[tuple[str, int]]:
+    """Find all pairs of charged residues in a sequence and their distance."""
+    charged_amino_acids = {'K', 'R', 'H', 'D', 'E'}
+    positions = [(i + 1, aa) for i, aa in enumerate(seq) if aa in charged_amino_acids]
+    result = []
+    for i in range(len(positions)):
+        pos_i, aa_i = positions[i]
+        for j in range(i + 1, len(positions)):
+            pos_j, aa_j = positions[j]
+            pair = aa_i + aa_j
+            distance = pos_j - pos_i
+            result.append((pair, distance))
+    return result
+
+
+def get_dG_electrost(pept: str, i: int, j: int, ionic_strength: float, pH: float, T: float) -> float:
+    """From Lecroix et al. 1998: 
+    'This new term includes all electrostatic interactions between two charged residues 
+    inside and outside the helical segment'
+    Use equations (5) - (11) from the 1998 paper.
+    """
+    helix = get_helix(pept, i, j)
+    charged_pairs = find_charged_pairs(helix)
+    energy_sum = 0.0
+    for p in charged_pairs:
+        pair, distance = p[0], f'i+{p[1]}'
+        helix_dist = table_6_helix_lacroix.loc[pair, distance]
+        coil_dist = table_6_coil_lacroix.loc[pair, distance]
+        # Eq (6)
+        G_hel = debye_huckel_full(helix_dist, ionic_strength, T)
+        G_rc = debye_huckel_full(coil_dist, ionic_strength, T)
+        dG = G_hel - G_rc
+        # Eq (8)
+        res1, res2 = pair
+        pKa_ref_1 = pka_values.loc[res1, 'pKa']
+        pKa_ref_2 = pka_values.loc[res2, 'pKa']
+        
+        pKa_rc_1, pKa_rc_2 = pKa_ref_1 + G_rc / (2.3 * 1.987e-3 * T), pKa_ref_2 + G_rc / (2.3 * 1.987e-3 * T)
+        # Eq (9)
+        pKa_hel_1, pKa_hel_2 = pKa_ref_1 + G_hel / (2.3 * 1.987e-3 * T), pKa_ref_2 + G_hel / (2.3 * 1.987e-3 * T)
+        # Eq (10)
+        if res1 in ['D', 'E']:
+            q1_hel = acidic_residue_ionization(pH, pKa_hel_1, G_hel, T)
+        else:
+            q1_hel = basic_residue_ionization(pH, pKa_hel_1, G_hel, T)
+        if res2 in ['D', 'E']:
+            q2_hel = acidic_residue_ionization(pH, pKa_hel_2, G_hel, T)
+        else:
+            q2_hel = basic_residue_ionization(pH, pKa_hel_2, G_hel, T)
+        # TODO: Scale the interaction energy by the degree of ionization
+
+    return energy_sum
