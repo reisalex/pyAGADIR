@@ -86,6 +86,7 @@ dG_Int array (kcal/mol): [0.96 0.8  0.76 1.13 0.8  0.95 0.95 1.08 0.8  0.76 1.12
 * Test correct functioning of staple term or schellman term.
 * We need to locate a source for the N- and C-terminal values for the individual amino acids. Currently using average value from Stryer.
 * Calcualte water dielectric constant from temperature.
+* Ensure that N- and C-terminal capping is dealt with appropriately. Introduce protein "capping" for accurate estimations of helices in proteins?
 * Update pytests to fit new model.
 
 
