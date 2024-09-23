@@ -552,7 +552,11 @@ def debye_huckel_full(distance_r: float, ionic_strength: float, T: int) -> float
     """
     # Constants
     epsilon_0 = 8.854e-12  # Permittivity of free space in C^2/(Nm^2)
-    epsilon_r = 88.  # Relative permittivity (dielectric constant) of water at 273 K
+    #epsilon_r = 88.  # Relative permittivity (dielectric constant) of water at 273 K
+    # Temperature dependent relative permittivity of water
+    # from # J. Am. Chem. Soc. 1950, 72, 7, 2844–2847
+    epsilon_r = 5321/T+233.76-0.9297*T+0.1417*1e-2*T*T-0.8292*1e-6*T**3  
+
 
     N_A = 6.022e23  # Avogadro's number in mol^-1
     e = 1.602e-19  # Elementary charge in Coulombs
@@ -584,7 +588,10 @@ def calculate_interaction_energy(mu_helix: float, distance_r: float, screening_f
         float: The interaction energy.
     """
     coulomb_constant = 332. # in kcal Å / (mol e^2)
-    epsilon_r = 88.  # Relative permittivity (dielectric constant) of water at 273 K
+     #epsilon_r = 88.  # Relative permittivity (dielectric constant) of water at 273 K
+    # Temperature dependent relative permittivity of water
+    # from # J. Am. Chem. Soc. 1950, 72, 7, 2844–2847
+    epsilon_r = 5321/T+233.76-0.9297*T+0.1417*1e-2*T*T-0.8292*1e-6*T**3  
 
     energy = coulomb_constant / epsilon_r * (mu_helix / distance_r) * screening_factor
     return energy
