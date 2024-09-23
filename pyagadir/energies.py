@@ -46,6 +46,34 @@ table_4b_lacroix = pd.read_csv(
     sep='\t',
 ).astype(float)
 
+# load sidechain distances for helices
+table_6_helix_lacroix = pd.read_csv(
+    datapath.joinpath('table_6_helix_lacroix.tsv'),
+    index_col='Pos',
+    sep='\t',
+).astype(float)
+
+# load sidechain distances for coils
+table_6_coil_lacroix = pd.read_csv(
+    datapath.joinpath('table_6_coil_lacroix.tsv'),
+    index_col='Pos',
+    sep='\t',
+).astype(float)
+
+# load N-terminal distances between charged amino acids and the half charge from the helix macrodipole
+table_7_ccap_lacroix = pd.read_csv(
+    datapath.joinpath('table_7_Ccap_lacroix.tsv'),
+    index_col='AA',
+    sep='\t',
+).astype(float)
+
+# load C-terminal distances between charged amino acids and the half charge from the helix macrodipole
+table_7_ncap_lacroix = pd.read_csv(
+    datapath.joinpath('table_7_Ncap_lacroix.tsv'),
+    index_col='AA',
+    sep='\t',
+).astype(float)
+
 # load pKa values for for side chain ionization and the N- and C-terminal capping groups
 pka_values = pd.read_csv(
     datapath.joinpath('pka_values.tsv'),
@@ -528,6 +556,7 @@ def debye_huckel_full(distance_r: float, ionic_strength: float, T: int) -> float
     # Temperature dependent relative permittivity of water
     # from # J. Am. Chem. Soc. 1950, 72, 7, 2844–2847
     epsilon_r = 5321/T+233.76-0.9297*T+0.1417*1e-2*T*T-0.8292*1e-6*T**3  
+
 
     N_A = 6.022e23  # Avogadro's number in mol^-1
     e = 1.602e-19  # Elementary charge in Coulombs

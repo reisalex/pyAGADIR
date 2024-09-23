@@ -50,6 +50,51 @@ Energy contributions in cal/mol Kcal/mol * 100 of the non-charged side chain-sid
 
 The interaction free energies correspond to those between non-charged residues, or in the case of two residues that can be charged to those cases in which at least one of the two is non-charged (the interaction is scaled according to the population of charged and neutral forms of the participating amino acids).
 
+## table_6_coil_lacroix
+Average distance between charged groups (Å).
+
+The distances shown in this table have been obtained from the analysis of the protein database, or from a modeled helix, as indicated in Methods and represent average values. In the different columns we show the distance between residues at position i and i+x.  The amino acid pairs are shown in one-letter code. The nomenclature for the helix position of the charged residues (columns N-cap etc...) is that of Richardson & Richardson (1988).
+
+Rcoil 		Distance between i, i+x pairs of charged residues in the whole protein database.   
+RcoilRest 		Average distance between i, i+x pairs of charged residues in the reference state 
+		not included in Rcoil. 
+
+## table_6_helix_lacroix
+Average distance between charged groups (Å).
+
+The distances shown in this table have been obtained from the analysis of the protein database, or from a modeled helix, as indicated in Methods and represent average values. In the different columns we show the distance between residues at position i and i+x.  The amino acid pairs are shown in one-letter code. The nomenclature for the helix position of the charged residues (columns N-cap etc...) is that of Richardson & Richardson (1988).
+
+Helix		Distance between i 	i+x pairs of charged residues located inside an a-helix (excluding caps). 
+Helixrest 		The same but for all possible charged pairs not included before. 
+Ncap		Distance between the N-cap residue (i) and a helical residue located at position i+x.  
+N’		Distance between the residue at position N’ (i) and a helical residue located at position i+x. 
+Ccap		Distance between the C-cap residue (i) and a helical residue located at position i-x. 
+C’		Distance between residue C’ (i) when residue C’ is not a Gly and a helical residue 
+		located at position i-x. 
+C’gcap		Distance between residue C’ (i) when residue C’ is a Gly and a helical residue 
+		located at position i-x.  The presence of a Gly allows dihedral angles forbidden, 
+		or not favourable, for other residues and therefore affects to the distance between 
+		a charged group at position C’ and the helix charged residues.  
+N-cap f 		Distance between the free N-terminal group when this group is located at the N-cap 
+		position and a helical residue at position i+x.  
+N’ f 		Distance between the free N-terminal group, when this group is located at position N’, 
+		and a helical residue at position i+x. 
+C-cap f 		Distance between the free C-terminal group, when this group is located at the C-cap 
+		position, and a helical residue at position i-x.   
+C’ f 		Distance between the free C-terminal group, when this group is located at position C’, 
+		and a helical residue at position i-x.  
+
+## table_7_Ncap_lacroix
+Distances (Å) between charged amino acids and the half charge from the helix macrodipole.
+
+The distances in Å shown in this table have been obtained from the analysis of the protein database as indicated in Methods.  The nomenclature for the helix position of the charged residues (columns N-cap etc...) is that of Richardson & Richardson (1988).
+
+## table_7_Ccap_lacroix
+Distances (Å) between charged amino acids and the half charge from the helix macrodipole.
+
+The distances in Å shown in this table have been obtained from the analysis of the protein database as indicated in Methods.  The nomenclature for the helix position of the charged residues (columns N-cap etc...) is that of Richardson & Richardson (1988).
+
 ## pka_values
 The pKa values for N- and C-termini as well as ionizable side chains when incorporated in a peptide. The values are from Nozaki and Tanford 1969 (https://doi.org/10.1016/S0076-6879(67)11088-4).
+
 
