@@ -557,13 +557,15 @@ def electrostatic_interaction_energy(qi: float, qp: float, r: float, I: float, T
      # Constants
     epsilon_0 = 8.854e-12  # Permittivity of free space in C^2/(Nm^2)
     epsilon_r = 88.  # Relative permittivity (dielectric constant) of water at 273 K
+    N_A = 6.022e23  # Avogadro's number in mol^-1
     e = 1.602e-19  # Elementary charge in Coulombs
     
     r = r * 1e-10 # Convert distance from Ångströms to meters
-    coulomb_term = e**2 * qi * qp / (3 * math.pi * epsilon_0 * epsilon_r * r)
+    coulomb_term = e**2 * qi * qp / (3 * math.pi * epsilon_0 * epsilon_r * r) 
     kappa = debye_huckel_full_new(r, I, T)
-    return coulomb_term * math.exp(-kappa * r)
-
+    energy_joules = coulomb_term * math.exp(-kappa * r)
+    energy_kcal_mol = N_A * energy_joules / 4184
+    return energy_kcal_mol
 
 def debye_huckel_full_new(distance_r: float, ionic_strength: float, T: int) -> float:
     """Calculate the Debye-Huckel parameter K.
