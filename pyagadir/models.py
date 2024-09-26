@@ -132,11 +132,7 @@ class AGADIR(object):
         # calculate dG_Hbond for the helical segment here
         dG_Hbond = energies.get_dG_Hbond(seq, i, j)
 
-        # calculate ddG (eq 12 in Lacroix)
-        alpha = 0.15
-        beta = 6.0
-
-        # # side-chain interactions, excluding N- and C-terminal capping residues
+        # side-chain interactions, excluding N- and C-terminal capping residues
         dG_i1_tot = energies.get_dG_i1(seq, i, j)
         dG_i3_tot = energies.get_dG_i3(seq, i, j)
         dG_i4_tot = energies.get_dG_i4(seq, i, j)
@@ -150,7 +146,8 @@ class AGADIR(object):
 
         # get electrostatic interactions between N- and C-terminal capping charges and the helix macrodipole
         dG_N_term, dG_C_term = energies.get_dG_terminals(seq, i, j, self.molarity, self.pH, self.T)
-        # 
+
+        # get electrostatic energies between pairs of charged side chains
         dG_electrost = energies.get_dG_electrost(seq, i, j, self.molarity, self.pH, self.T)
 
         # modify by ionic strength according to equation 12 of the paper
@@ -158,7 +155,7 @@ class AGADIR(object):
         beta = 6.0
         dG_ionic = -alpha * (1 - np.exp(-beta * self.molarity))
 
-        # make fancy printout *** for debugging and development
+        # make fancy printout for debugging and development
         for seq_idx, arr_idx in zip(range(i, i+j), range(j)):
             print(f'Helix: start= {i+1} end= {i+j}  length=  {j}')
             print(f'residue index = {seq_idx+1}')
@@ -177,7 +174,6 @@ class AGADIR(object):
         print(f'dG_electrost = {dG_electrost:.4f}')
         print(f'main chain-main chain H-bonds = {dG_Hbond:.4f}')
         print(f'ionic strngth corr. from eq. 12 {dG_ionic:.4f}')
-
 
         # sum all components
         dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + dG_ionic + sum(dG_N_term) + sum(dG_C_term) + dG_electrost # + sum(dG_dipole) 
