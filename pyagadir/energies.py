@@ -540,6 +540,50 @@ def calculate_r(N: int) -> float:
     r = 0.1 + (N+1) * 2
     return r
 
+
+def electrostatic_interaction_energy(qi: float, qp: float, r: float, I: float, T:float) -> float:
+    """Calculate the interaction energy between two charges.
+
+    Args:
+        qi (float): Charge of the first residue.
+        qp (float): Charge of the second residue.
+        r (float): Distance between the residues.
+
+    Returns:
+        float: The interaction energy.
+    """
+     # Constants
+    epsilon_0 = 8.854e-12  # Permittivity of free space in C^2/(Nm^2)
+    epsilon_r = 88.  # Relative permittivity (dielectric constant) of water at 273 K
+    e = 1.602e-19  # Elementary charge in Coulombs
+    
+    coulomb_term = e**2 * qi * qp / (3 * math.pi * epsilon_0 * epsilon_r * r)
+    kappa = debye_huckel_full_new(r, I, T)
+    return coulomb_term * math.exp(-kappa * r)
+
+
+def debye_huckel_full_new(distance_r: float, ionic_strength: float, T: int) -> float:
+    """Calculate the Debye-Huckel parameter K.
+    Equation 7 from Lacroix, 1998.
+    Args:
+        distance_r (float): Distance from the terminal to the helix in Ångströms.
+        ionic_strength (float): Ionic strength of the solution in mol/L.
+        T (int): Temperature in Kelvin.
+    Returns:
+        float: The Debye-Huckel parameter K.
+    """
+    N_A = 6.022e23  # Avogadro's number in mol^-1
+    e = 1.602e-19  # Elementary charge in Coulombs
+    k_B = 1.38e-23  # Boltzmann constant in J/K
+    # Convert distance from Ångströms to meters
+    distance_r = distance_r * 1e-10
+    # Convert ionic strength to mol/m**3
+    ionic_strength = ionic_strength * 1000
+    # Calculate Debye screening parameter kappa
+    kappa = math.sqrt((8 * math.pi * N_A * e**2 * ionic_strength) / (1000 * k_B * T))
+    return kappa
+
+
 def debye_huckel_full(distance_r: float, ionic_strength: float, T: int) -> float:
     """Calculate the Debye-Huckel screening factor.
 
@@ -615,7 +659,7 @@ def get_dG_terminals(pept: str, i: int, j: int, ionic_strength: float, pH: float
     # TODO: Add values for each aa
     qKaN = pka_values.loc['Nterm', 'pKa']
     distance_r = calculate_r(i)  # Distance to N terminal
-    screening_factor = debye_huckel_full(distance_r, ionic_strength, T)
+    screening_factor = debye_huckel_full(distance_r, ionic_strength, T) # TODO: Change to debye_huckel_full_new?
     N_term_energy = calculate_interaction_energy(mu_helix, distance_r, screening_factor)
     q = basic_residue_ionization(pH, qKaN, N_term_energy, T) # TODO: ?)
     N_term_energy *= q
@@ -628,7 +672,7 @@ def get_dG_terminals(pept: str, i: int, j: int, ionic_strength: float, pH: float
     # TODO: Add values for each aa
     qKaC = pka_values.loc['Cterm', 'pKa']
     distance_r = calculate_r(len(pept) - (i + j))  # Distance to C terminal
-    screening_factor = debye_huckel_full(distance_r, ionic_strength, T)
+    screening_factor = debye_huckel_full(distance_r, ionic_strength, T) # TODO: Change to debye_huckel_full_new?
     C_term_energy = calculate_interaction_energy(mu_helix, distance_r, screening_factor)
     q = acidic_residue_ionization(pH, qKaC, C_term_energy, T) # TODO: ?)
     C_term_energy *= -q
@@ -666,15 +710,14 @@ def get_dG_electrost(pept: str, i: int, j: int, ionic_strength: float, pH: float
         pair, distance = p[0], f'i+{p[1]}'
         helix_dist = table_6_helix_lacroix.loc[pair, distance]
         coil_dist = table_6_coil_lacroix.loc[pair, distance]
-        # Eq (6)
-        G_hel = debye_huckel_full(helix_dist, ionic_strength, T)
-        G_rc = debye_huckel_full(coil_dist, ionic_strength, T)
-        dG = G_hel - G_rc
+        # Eq (6). First assume qp = qi = 1
+        qi, qp = 1, 1
+        G_hel = electrostatic_interaction_energy(qi, qp, helix_dist, ionic_strength, T) 
+        G_rc = electrostatic_interaction_energy(qi, qp, coil_dist, ionic_strength, T) 
         # Eq (8)
         res1, res2 = pair
         pKa_ref_1 = pka_values.loc[res1, 'pKa']
         pKa_ref_2 = pka_values.loc[res2, 'pKa']
-        
         pKa_rc_1, pKa_rc_2 = pKa_ref_1 + G_rc / (2.3 * 1.987e-3 * T), pKa_ref_2 + G_rc / (2.3 * 1.987e-3 * T)
         # Eq (9)
         pKa_hel_1, pKa_hel_2 = pKa_ref_1 + G_hel / (2.3 * 1.987e-3 * T), pKa_ref_2 + G_hel / (2.3 * 1.987e-3 * T)
@@ -688,5 +731,9 @@ def get_dG_electrost(pept: str, i: int, j: int, ionic_strength: float, pH: float
         else:
             q2_hel = basic_residue_ionization(pH, pKa_hel_2, G_hel, T)
         # TODO: Scale the interaction energy by the degree of ionization
+        # Eq (6) again, with the updated values
+        G_hel = electrostatic_interaction_energy(q1_hel, q2_hel, helix_dist, ionic_strength, T)
+        G_rc = electrostatic_interaction_energy(q1_hel, q2_hel, coil_dist, ionic_strength, T)
+        energy_sum += G_hel - G_rc
 
     return energy_sum
