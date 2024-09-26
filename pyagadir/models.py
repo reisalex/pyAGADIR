@@ -180,7 +180,7 @@ class AGADIR(object):
 
 
         # sum all components
-        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + dG_ionic + sum(dG_N_term) + sum(dG_C_term) # + sum(dG_dipole) + sum(dG_electrostatic)
+        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + dG_ionic + sum(dG_N_term) + sum(dG_C_term) + dG_electrost # + sum(dG_dipole) 
 
         print(f'total Helix free energy = {dG_Hel:.4f}')
         print('==============================================')

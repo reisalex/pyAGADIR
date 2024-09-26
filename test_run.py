@@ -49,5 +49,6 @@ parser.add_argument(
 args = parser.parse_args()
 
 model = AGADIR(method=args.method, T=args.temperature, M=args.ionic_strength, pH=args.pH)
-result = model.predict(args.peptide)
+#result = model.predict(args.peptide)
+result = model.predict('AAAKKAAA')
 print(result)

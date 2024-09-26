@@ -548,6 +548,8 @@ def electrostatic_interaction_energy(qi: float, qp: float, r: float, I: float, T
         qi (float): Charge of the first residue.
         qp (float): Charge of the second residue.
         r (float): Distance between the residues.
+        I (float): Ionic strength of the solution.
+        T (float): Temperature in Kelvin.
 
     Returns:
         float: The interaction energy.
@@ -557,6 +559,7 @@ def electrostatic_interaction_energy(qi: float, qp: float, r: float, I: float, T
     epsilon_r = 88.  # Relative permittivity (dielectric constant) of water at 273 K
     e = 1.602e-19  # Elementary charge in Coulombs
     
+    r = r * 1e-10 # Convert distance from Ångströms to meters
     coulomb_term = e**2 * qi * qp / (3 * math.pi * epsilon_0 * epsilon_r * r)
     kappa = debye_huckel_full_new(r, I, T)
     return coulomb_term * math.exp(-kappa * r)
