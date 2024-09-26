@@ -562,7 +562,7 @@ def electrostatic_interaction_energy(qi: float, qp: float, r: float, I: float, T
     
     r = r * 1e-10 # Convert distance from Ångströms to meters
     coulomb_term = e**2 * qi * qp / (3 * math.pi * epsilon_0 * epsilon_r * r) 
-    kappa = debye_huckel_full_new(r, I, T)
+    kappa = debye_huckel_full(r, I, T)
     energy_joules = coulomb_term * math.exp(-kappa * r)
     energy_kcal_mol = N_A * energy_joules / 4184
     return energy_kcal_mol
@@ -664,7 +664,7 @@ def get_dG_terminals(pept: str, i: int, j: int, ionic_strength: float, pH: float
     # TODO: Add values for each aa
     qKaN = pka_values.loc['Nterm', 'pKa']
     distance_r = calculate_r(i)  # Distance to N terminal
-    screening_factor = debye_huckel_full(distance_r, ionic_strength, T) # TODO: Change to debye_huckel_full_new?
+    screening_factor = debye_huckel_full(distance_r, ionic_strength, T) 
     N_term_energy = calculate_interaction_energy(mu_helix, distance_r, screening_factor)
     q = basic_residue_ionization(pH, qKaN, N_term_energy, T) # TODO: ?)
     N_term_energy *= q
@@ -677,7 +677,7 @@ def get_dG_terminals(pept: str, i: int, j: int, ionic_strength: float, pH: float
     # TODO: Add values for each aa
     qKaC = pka_values.loc['Cterm', 'pKa']
     distance_r = calculate_r(len(pept) - (i + j))  # Distance to C terminal
-    screening_factor = debye_huckel_full(distance_r, ionic_strength, T) # TODO: Change to debye_huckel_full_new?
+    screening_factor = debye_huckel_full(distance_r, ionic_strength, T) 
     C_term_energy = calculate_interaction_energy(mu_helix, distance_r, screening_factor)
     q = acidic_residue_ionization(pH, qKaC, C_term_energy, T) # TODO: ?)
     C_term_energy *= -q
@@ -739,7 +739,6 @@ def get_dG_electrost(pept: str, i: int, j: int, ionic_strength: float, pH: float
         else:
             q2_hel = basic_residue_ionization(pH, pKa_hel_2, G_hel, T)
             q2_rc = basic_residue_ionization(pH, pKa_rc_2, G_rc, T)
-        # TODO: Scale the interaction energy by the degree of ionization
         # Eq (6) again, with the updated values
         G_hel = electrostatic_interaction_energy(q1_hel, q2_hel, helix_dist, ionic_strength, T)
         G_rc = electrostatic_interaction_energy(q1_rc, q2_rc, coil_dist, ionic_strength, T)
