@@ -724,16 +724,20 @@ def get_dG_electrost(pept: str, i: int, j: int, ionic_strength: float, pH: float
         # Eq (10)
         if res1 in ['D', 'E']:
             q1_hel = acidic_residue_ionization(pH, pKa_hel_1, G_hel, T)
+            q1_rc = acidic_residue_ionization(pH, pKa_rc_1, G_rc, T)
         else:
             q1_hel = basic_residue_ionization(pH, pKa_hel_1, G_hel, T)
+            q1_rc = basic_residue_ionization(pH, pKa_rc_1, G_rc, T)
         if res2 in ['D', 'E']:
             q2_hel = acidic_residue_ionization(pH, pKa_hel_2, G_hel, T)
+            q2_rc = acidic_residue_ionization(pH, pKa_rc_2, G_rc, T)
         else:
             q2_hel = basic_residue_ionization(pH, pKa_hel_2, G_hel, T)
+            q2_rc = basic_residue_ionization(pH, pKa_rc_2, G_rc, T)
         # TODO: Scale the interaction energy by the degree of ionization
         # Eq (6) again, with the updated values
         G_hel = electrostatic_interaction_energy(q1_hel, q2_hel, helix_dist, ionic_strength, T)
-        G_rc = electrostatic_interaction_energy(q1_hel, q2_hel, coil_dist, ionic_strength, T)
+        G_rc = electrostatic_interaction_energy(q1_rc, q2_rc, coil_dist, ionic_strength, T)
         energy_sum += G_hel - G_rc
 
     return energy_sum
