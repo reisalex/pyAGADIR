@@ -1,272 +1,309 @@
 
-from importlib.resources import files
-import numpy  as np
-import pandas as pd
+import numpy as np
+from typing import List, Tuple, Dict
+from pyagadir import energies
+from pyagadir.utils import is_valid_peptide_sequence, is_valid_index
 
-# get params
-datapath = files('pyagadir.data')
 
-table2  = pd.read_csv(
-    datapath.joinpath('table2.csv'),
-    index_col='AA',
-).astype(float)
-
-table3a = pd.read_csv(
-    datapath.joinpath('table3a.csv'),
-    index_col='AA',
-).astype(float)
-table3a.columns = table3a.columns.astype(int)
-
-table3b = pd.read_csv(
-    datapath.joinpath('table3b.csv'),
-    index_col='AA',
-).astype(float)
-table3b.columns = table3b.columns.astype(int)
-
-table4a = pd.read_csv(
-    datapath.joinpath('table4a.csv'),
-    index_col='index',
-).astype(float)
-
-table4b = pd.read_csv(
-    datapath.joinpath('table4b.csv'),
-    index_col='index',
-).astype(float)
-
-def get_dG_Int(AA):
-    return table2.loc[AA,'Intrinsic']
-
-dG_Hbond = -0.775
-def get_dG_Hbond(j):
-    return dG_Hbond*max((j-4),0)
-
-def get_dG_i1(AAi,AAi1):
-    charge = 1
-    for AA in [AAi,AAi1]:
-        if AA in set(['R','H','K']): # pos
-            charge *= 1
-        elif AA in set(['D','E']): # neg
-            charge *= -1
-        else:
-            return 0.0
-    else:
-        return 0.05*charge
-
-def get_dG_i3(AAi,AAi3):
-    return table4a.loc[AAi, AAi3]
-
-def get_dG_i4(AAi,AAi4):
-    return table4b.loc[AAi, AAi4]
-
-# seq :: first 4 AA considered for dG_Ncap
-def get_dG_Ncap(seq):
-
-    Ncap = seq[0]
-
-    # possible formation for capping box
-    # when Glu (E) at N+3 (Harper & Rose, 1993;
-    # Dasgupta & Bell, 1993)
-    if seq[3] in ['E','Q','D']:
-        
-        dG_Ncap = table2.loc[Ncap,'Capp_box']
-    
-        # Other capping box options:
-        # Gln (Q) or Asp (D)
-        if seq[3] in ['Q','D'] and dG_Ncap < 0.0:
-            dG_Ncap *= 0.625
-
-        # special capping box case
-        # when there is a Pro (P) at N+1
-        if seq[1] == 'P':
-            dG_Ncap += table2.loc[Ncap,'Pro_N1']
-
-    else:
-        dG_Ncap = table2.loc[Ncap,'N_cap']
-
-    # Asp (D) + 2 special hygroden bond
-    # (Bell et al., 1992; Dasgurpta & Bell, 1993)
-    if seq[2] == 'D':
-        dG_Ncap = min(table2.loc[Ncap,'Asp_2'], dG_Ncap)
-        # only update if more negative
-        # (Pro N+1 is sometimes more stabilizing)
-
-    return dG_Ncap
-
-def get_dG_Ccap(AA):
-    return table2.loc[AA,'C_cap']
-
-def get_dG_dipole(seq):
-
-    N = len(seq)
-    dG_dipole = 0.0
-
-    # N-term contribution (negative)
-    for i in range(0,min(N,10)):
-        AA = seq[i]
-        dG_dipole += table3a.loc[AA,i]
-
-    # C-term contributions (positive)
-    for i in range(-1,-1*min(N,10)-1,-1):
-        AA = seq[i]
-        dG_dipole += table3b.loc[AA,i]
-
-    return dG_dipole
-
-def calc_dG_Hel(i, j, result):
-    # where i is the start and j is the length of helical segment
-
-    dG_Int    = sum(result.int_array[i:i+j])
-
-    # custom case when Pro at N+1
-    if result.seq[i+1] == 'P':
-        dG_Int += (0.66 - 3.33)
-
-    dG_Hbond  = get_dG_Hbond(j)
-    dG_i1_tot = sum(result.i1_array[i:i+j-1])
- 
-    dG_i3_tot = sum(result.i3_array[i:i+j-3])
-    dG_i4_tot = sum(result.i4_array[i:i+j-4])
-    dG_SD     = dG_i1_tot + dG_i3_tot + dG_i4_tot
-
-    dG_Ncap   = result.N_array[i]
-    dG_Ccap   = result.C_array[i+j-1]
-    dG_nonH   = dG_Ncap + dG_Ccap
-    
-    dG_dipole = get_dG_dipole(result.seq[i:i+j])
-
-    dG_Hel = dG_Int + dG_Hbond + dG_SD + dG_nonH + dG_dipole
-
-    dG_dict = {
-        'dG_Helix': dG_Hel,
-        'dG_Int': dG_Int,
-        'dG_Hbond': dG_Hbond,
-        'dG_SD': dG_SD,
-        'dG_nonH': dG_nonH,
-        'dG_dipole': dG_dipole,
-        'dG_i1_tot': dG_i1_tot,
-        'dG_i3_tot': dG_i3_tot,
-        'dG_i4_tot': dG_i4_tot,
-        'dG_Ncap': dG_Ncap,
-        'dG_Ccap': dG_Ccap
-    }
-
-    return dG_Hel, dG_dict
-
-R = 1.987204258e-3 # kcal/mol/K
-celsius_2_kelvin = lambda T: T + 273.0
-def calc_K(dG_Hel, T=5.0):
-    RT = R*celsius_2_kelvin(T)
-    return np.exp(-dG_Hel/RT)
 
 class ModelResult(object):
+    """
+    Class representing the result of a model.
+    """
 
-    def __init__(self, seq):
-        
-        self.seq  = seq
+    def __init__(self, seq: str) -> None:
+        """
+        Initialize the ModelResult object.
 
-        self.int_array   = np.zeros(len(seq))
-        self.i1_array    = np.zeros(len(seq))
-        self.i3_array    = np.zeros(len(seq))
-        self.i4_array    = np.zeros(len(seq))
-        self.N_array     = np.zeros(len(seq))
-        self.C_array     = np.zeros(len(seq))
-        
-        n = len(seq)
-        self.dG_dict_mat = [None for j in range(6)]+\
-                           [[None for _ in range(0,n-j+1)] for j in range(6,n+1)]
-        self.K_tot       = 0.0
-        self.K_tot_array = np.zeros(len(seq))
-        self.Z           = 0.0
-        self.Z_array     = np.zeros(len(seq))
-        self.helical_propensity = np.zeros(len(seq))
-        self.percent_helix = 0.0
+        Args:
+            seq (str): The peptide sequence.
+        """
+        self.seq: str = seq
+        n: int = len(seq)
+        self.dG_dict_mat: List[List[None]] = [None for j in range(5)] + [[None for _ in range(0, n - j)] for j in range(5, n)] # helix length is at least 6 but we zero-index
+        self.K_tot: float = 0.0
+        self.K_tot_array: np.ndarray = np.zeros(len(seq))
+        self.Z: float = 0.0
+        self.Z_array: np.ndarray = np.zeros(len(seq))
+        self.helical_propensity: np.ndarray = None
+        self.percent_helix: float = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the helical propensity.
+
+        Returns:
+            str: The helical propensity.
+        """
         return str(self.helical_propensity)
+    
+    def get_sequence(self) -> str:
+        """
+        Get the peptide sequence.
 
-    def get_helical_propensity(self):
+        Returns:
+            str: The peptide sequence.
+        """
+        return self.seq
+
+    def get_helical_propensity(self) -> np.ndarray:
+        """
+        Get the helical propensity.
+
+        Returns:
+            np.ndarray: The helical propensity for each amino acid.
+        """
         return self.helical_propensity
 
-    def get_percent_helix(self):
+    def get_percent_helix(self) -> float:
+        """
+        Get the percentage of helix.
+
+        Returns:
+            float: The percentage of helix for the peptide.
+        """
         return self.percent_helix
 
+
+
 class AGADIR(object):
+    """
+    AGADIR class for predicting helical propensity using AGADIR method.
+    """
 
-    method_options = ['r','1s','ms']
-    lambdas = {
-        'r':  lambda result: result.K_tot_array / result.Z_array,
-        '1s': lambda result: result.K_tot_array / result.Z
-    }
+    def __init__(self, method: str = '1s', T: float = 4.0, M: float = 0.15, pH: float = 7.0):
+        """
+        Initialize AGADIR object.
 
-    def __init__(self, method='1s'):
-        assert method in self.method_options, \
-            "Method provided must be one of ['r','1s','ms']; \
+        Args:
+            method (str): Method for calculating helical propensity. Must be one of ['r','1s'].
+                'r' : Residue partition function.
+                '1s': One-sequence approximation.
+            T (float): Temperature in Celsius. Default is 4.0.
+            M (float): Ionic strength in Molar. Default is 0.15.
+        """
+        self.method_options = ['r', '1s']
+        if method not in self.method_options:
+            raise ValueError(
+                "Method provided must be one of ['r','1s']; \
                 'r' : Residue partition function. \
                 '1s': One-sequence approximation. \
-                'ms': Multiple-sequence approximation. \
             See documentation and AGADIR papers for more information. \
             "
+            )
         self._method = method
-        self._probability_fxn = self.lambdas[method]
+        self.T = T + 273.15
+        self.molarity = M
+        self.pH = pH
+ 
+        self.has_acetyl = False
+        self.has_succinyl = False
+        self.has_amide = False
 
-    def _calc_helical_propensity(self):
-        result = self.result
-        result.Z_array = 1.0 + result.K_tot_array
-        result.Z       = 1.0 + result.K_tot
-        result.helical_propensity = self._probability_fxn(result)
-        result.percent_helix = np.round(np.mean(result.helical_propensity),3)
+        self.min_helix_length = 6
 
-    def _initialize_params(self):
-        
-        result = self.result
-        seq = result.seq
+    def _calc_dG_Hel(self, seq: str, i:int, j:int) -> Tuple[np.float64, Dict[str, float]]:
+        """
+        Calculate the Helix free energy and its components.
 
-        # get intrinsic energies
-        for i in range(0,len(seq)):
-            result.int_array[i] = get_dG_Int(seq[i])
+        Args:
+            seq (str): The helical segment sequence.
+            i (int): The starting position of the helical segment.
+            j (int): The length of the helical segment.
 
-        # get i,i+1 energies (coulombic)
-        for i in range(0,len(seq)-1):
-            result.i1_array[i] = get_dG_i1(seq[i],seq[i+1])
+        Returns:
+            Tuple[np.float64, Dict[str, float]]: The Helix free energy and its components.
+        """
+        # intrinsic energies for the helical segment, excluding N- and C-terminal capping residues
+        dG_Int = energies.get_dG_Int(seq, i, j, self.pH, self.T)
 
-        # get i,i+3 energies (dG_SD)
-        for i in range(0,len(seq)-3):
-            result.i3_array[i] = get_dG_i3(seq[i],seq[i+3])
+        # "non-hydrogen bond" capping energies, only for the first and last residues of the helix
+        dG_Ncap = energies.get_dG_Ncap(seq, i, j)
+        dG_Ccap = energies.get_dG_Ccap(seq, i, j)
+        dG_nonH = dG_Ncap + dG_Ccap
+        # TODO dG_nonH might need further adjustment, see page 175 in lacroix paper
 
-        # get i,i+4 energies (dG_SD)
-        for i in range(0,len(seq)-4):
-            result.i4_array[i] = get_dG_i4(seq[i],seq[i+4])
-        
-        # get Ncap energies
-        for i in range(0,len(seq)-5):
-            result.N_array[i] = get_dG_Ncap(seq[i:i+6])
+        # get hydrophobic staple motif energies
+        dG_staple = energies.get_dG_staple(seq, i, j)
 
-        # get Ccap energies
-        for i in range(5,len(seq)):
-            result.C_array[i] = get_dG_Ccap(seq[i])
+        # get schellman motif energies
+        dG_schellman = energies.get_dG_schellman(seq, i, j)
 
-    def _calc_partition_fxn(self):
-        
-        result = self.result
-        seq    = self.result.seq
+        # calculate dG_Hbond for the helical segment here
+        dG_Hbond = energies.get_dG_Hbond(seq, i, j)
 
-        n = len(seq)
-        for j in range(6,n+1): # helical segment lengths
-            for i in range(0,n-j+1): # helical segment positions
-                dG_Hel, dG_dict = calc_dG_Hel(i, j, result)
-                result.dG_dict_mat[j][i] = dG_dict
-                K = calc_K(dG_Hel)
-                result.K_tot_array[i:i+j] += K # method='r'
-                result.K_tot += K # method='1s'
+        # side-chain interactions, excluding N- and C-terminal capping residues
+        # dG_i1_tot = energies.get_dG_i1(seq, i, j)
+        dG_i3_tot = energies.get_dG_i3(seq, i, j, self.pH, self.T)
+        dG_i4_tot = energies.get_dG_i4(seq, i, j, self.pH, self.T)
+        dG_SD = dG_i3_tot + dG_i4_tot  # dG_i1_tot
+
+        # get the interactions between N- and C-terminal capping charges and the helix macrodipole
+        dG_N_term, dG_C_term = energies.get_dG_terminals(seq, i, j, self.molarity, self.pH, self.T, self.has_acetyl, self.has_succinyl, self.has_amide)
+
+        # get the interaction between charged side chains and the helix macrodipole
+        dG_dipole = energies.get_dG_sidechain_macrodipole(seq, i, j, self.molarity, self.pH, self.T)
+
+        # get electrostatic energies between pairs of charged side chains
+        dG_electrost = energies.get_dG_electrost(seq, i, j, self.molarity, self.pH, self.T)
+
+        # modify by ionic strength according to equation 12 of the paper
+        alpha = 0.15
+        beta = 6.0
+        dG_ionic = -alpha * (1 - np.exp(-beta * self.molarity))
+
+        # make fancy printout for debugging and development
+        for seq_idx, arr_idx in zip(range(i, i+j), range(j)):
+            print(f'Helix: start= {i+1} end= {i+j}  length=  {j}')
+            print(f'residue index = {seq_idx+1}')
+            print(f'residue = {seq[seq_idx]}')
+            print(f'g N term = {dG_N_term[arr_idx]:.4f}')
+            print(f'g C term = {dG_C_term[arr_idx]:.4f}')
+            print(f'g capping =   {dG_nonH[arr_idx]:.4f}')
+            print(f'g intrinsic = {dG_Int[arr_idx]:.4f}')
+            print(f'g dipole = {dG_dipole[arr_idx]:.4f}')
+            print(f'gresidue = ')
+            print('****************')
+        print('Additional terms for helical segment')
+        print(f'i,i+3 and i,i+4 side chain-side chain interaction = {sum(dG_SD):.4f}')
+        print(f'g staple = {dG_staple:.4f}')
+        print(f'g schellman = {dG_schellman:.4f}')
+        print(f'dG_electrost = {dG_electrost:.4f}')
+        print(f'dG_electrost = {dG_electrost:.4f}')
+        print(f'main chain-main chain H-bonds = {dG_Hbond:.4f}')
+        print(f'ionic strngth corr. from eq. 12 {dG_ionic:.4f}')
+
+        # sum all components
+        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + dG_ionic + sum(dG_N_term) + sum(dG_C_term) + dG_electrost + np.sum(dG_dipole)
+
+        print(f'total Helix free energy = {dG_Hel:.4f}')
+        print('==============================================')
+
+        # TODO: do we need to return all these components? It was initally intended for the "ms" partition function calculation
+
+        # dG_dict = {
+        #     'dG_Helix': dG_Hel,
+        #     'dG_Int': dG_Int,
+        #     'dG_Hbond': dG_Hbond,
+        #     'dG_SD': dG_SD,
+        #     'dG_nonH': dG_nonH,
+        #     'dG_dipole': dG_dipole,
+        #     'dG_N_dipole': dG_N_dipole,
+        #     'dG_C_dipole': dG_C_dipole,
+        #     'dG_i1_tot': dG_i1_tot,
+        #     'dG_i3_tot': dG_i3_tot,
+        #     'dG_i4_tot': dG_i4_tot,
+        #     'dG_Ncap': dG_Ncap,
+        #     'dG_Ccap': dG_Ccap
+        # }
+
+        return dG_Hel, {}
+
+    def _calc_K(self, dG_Hel: float) -> float:
+        """
+        Calculate the equilibrium constant K.
+
+        Args:
+            dG_Hel (float): The Helix free energy.
+
+        Returns:
+            float: The equilibrium constant K.
+        """
+        R = 1.987204258e-3 # kcal/mol/K
+        return np.exp(-dG_Hel / (R * self.T))
+
+    def _calc_partition_fxn(self) -> None:
+        """
+        Calculate partition function for helical segments 
+        by summing over all possible helices.
+        """
+        # for i in range(0, len(self.result.seq) - self.min_helix_length + 1):  # for each position i
+        #     for j in range(self.min_helix_length, len(self.result.seq) - i + 1):  # for each helix length j
+
+        for j in range(self.min_helix_length, len(self.result.seq) + 1): # helix lengths (including caps)
+            for i in range(0, len(self.result.seq) - j + 1): # helical segment positions
+
+                # calculate dG_Hel and dG_dict
+                dG_Hel, dG_dict = self._calc_dG_Hel(seq=self.result.seq, i=i, j=j)
+
+                # TODO: these shuld be accounted for in the new table 1, verify this!
+                # # Add acetylation and amidation effects.
+                # # These are only considered for the first and last residues of the helix, 
+                # # and only if the peptide has been created in a way that they are present.
+                # if i == 0 and self.has_acetyl is True:
+                #     dG_Hel += -1.275
+                #     if self.result.seq[0] == 'A':
+                #         dG_Hel += -0.1
+
+                # elif i == 0 and self.has_succinyl is True:
+                #     dG_Hel += -1.775
+                #     if self.result.seq[0] == 'A':
+                #         dG_Hel += -0.1
+
+                # if (i + j == len(self.result.seq)) and (self.has_amide is True):
+                #     dG_Hel += -0.81
+                #     if self.result.seq[-1] == 'A':
+                #         dG_Hel += -0.1
+
+                # calculate the partition function K
+                K = self._calc_K(dG_Hel)
+                self.result.K_tot_array[i + 1:i + j - 1] += K  # method='r', by definition helical region does not include caps
+                self.result.K_tot += K  # method='1s'
 
         # if method='ms' (custom calculation here with result.dG_dict_mat)
+        ### Not implemented yet ###
 
-    def predict(self, seq):
-        result = self.result = ModelResult(seq)
-        self._initialize_params()
+    def _calc_helical_propensity(self) -> None:
+        """
+        Calculate helical propensity based on the selected method.
+        """
+        # get per residue helical propensity
+        if self._method == 'r':
+            print('r')
+            self.result.helical_propensity = 100 * self.result.K_tot_array / (1.0 + self.result.K_tot_array)
+
+        elif self._method == '1s':
+            print('1s')
+            self.result.helical_propensity = 100 * self.result.K_tot_array / (1.0 + self.result.K_tot)
+
+        # get overall percentage helix
+        self.result.percent_helix = np.round(np.mean(self.result.helical_propensity), 2)
+
+    def predict(self, seq: str) -> ModelResult:
+        """
+        Predict helical propensity for a given sequence.
+
+        Args:
+            seq (str): Input sequence.
+
+        Returns:
+            ModelResult: Object containing the predicted helical propensity.
+        """
+        seq = seq.upper()
+
+        if len(seq) < self.min_helix_length:
+            raise ValueError(f"Input sequence must be at least {self.min_helix_length} amino acids long.")
+
+        # check for acylation and amidation
+        if seq[0] == 'Z':
+            self.has_acetyl = True
+            seq = seq[1:]
+
+        elif seq[0] == 'X':
+            self.has_succinyl = True
+            seq = seq[1:]
+
+        if seq[-1] == 'B':
+            self.has_amide = True
+            seq = seq[:-1]
+
+        # ensure that the sequence is valid
+        is_valid_peptide_sequence(seq)
+
+        self.result = ModelResult(seq)
         self._calc_partition_fxn()
         self._calc_helical_propensity()
-        return result
+        return self.result
 
 if __name__ == "__main__":
     pass
