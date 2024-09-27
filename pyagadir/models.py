@@ -172,10 +172,12 @@ class AGADIR(object):
         print(f'g staple = {dG_staple:.4f}')
         print(f'g schellman = {dG_schellman:.4f}')
         print(f'dG_electrost = {dG_electrost:.4f}')
+        print(f'dG_electrost = {dG_electrost:.4f}')
         print(f'main chain-main chain H-bonds = {dG_Hbond:.4f}')
         print(f'ionic strngth corr. from eq. 12 {dG_ionic:.4f}')
 
         # sum all components
+        dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + dG_ionic + sum(dG_N_term) + sum(dG_C_term) + dG_electrost # + sum(dG_dipole) 
         dG_Hel = sum(dG_Int) + sum(dG_nonH) +  sum(dG_SD) + dG_staple + dG_schellman + dG_Hbond + dG_ionic + sum(dG_N_term) + sum(dG_C_term) + dG_electrost # + sum(dG_dipole) 
 
         print(f'total Helix free energy = {dG_Hel:.4f}')
