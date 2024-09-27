@@ -454,36 +454,36 @@ def get_dG_i4(pept: str, i: int, j: int) -> np.ndarray:
     return energy
 
 
-def get_dG_dipole(seq: str) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Calculate the dipole free energy contribution.
-    The nomenclature is that of Richardson & Richardson (1988),
-    which is different from the one used in the AGADIR paper.
-    Richardson considers the first and last helical residues as the caps.
+# def get_dG_dipole(seq: str) -> tuple[np.ndarray, np.ndarray]:
+#     """
+#     Calculate the dipole free energy contribution.
+#     The nomenclature is that of Richardson & Richardson (1988),
+#     which is different from the one used in the AGADIR paper.
+#     Richardson considers the first and last helical residues as the caps.
 
-    Args:
-        seq (str): The amino acid sequence.
+#     Args:
+#         seq (str): The amino acid sequence.
 
-    Returns:
-        tuple[np.ndarray, np.ndarray]: The dipole free energy contributions for N-terminal and C-terminal.
-    """
-    is_valid_peptide_sequence(seq)
+#     Returns:
+#         tuple[np.ndarray, np.ndarray]: The dipole free energy contributions for N-terminal and C-terminal.
+#     """
+#     is_valid_peptide_sequence(seq)
     
-    N = len(seq)
-    dG_N_dipole = np.zeros(N)
-    dG_C_dipole = np.zeros(N)
+#     N = len(seq)
+#     dG_N_dipole = np.zeros(N)
+#     dG_C_dipole = np.zeros(N)
 
-    # N-term dipole contributions
-    for i in range(0, min(N, 10)):
-        dG_N_dipole[i] = table3a.loc[seq[i], i]
+#     # N-term dipole contributions
+#     for i in range(0, min(N, 10)):
+#         dG_N_dipole[i] = table3a.loc[seq[i], i]
 
-    # C-term dipole contributions
-    seq_inv = seq[::-1]
-    for i in range(0, min(N, 10)):
-        dG_C_dipole[i] = table3b.loc[seq_inv[i], i*-1]
-    dG_C_dipole = dG_C_dipole[::-1]
+#     # C-term dipole contributions
+#     seq_inv = seq[::-1]
+#     for i in range(0, min(N, 10)):
+#         dG_C_dipole[i] = table3b.loc[seq_inv[i], i*-1]
+#     dG_C_dipole = dG_C_dipole[::-1]
 
-    return dG_N_dipole, dG_C_dipole
+#     return dG_N_dipole, dG_C_dipole
 
 
 def acidic_residue_ionization(pH: float, pKa: float, deltaG: float, T: float) -> float:
@@ -535,115 +535,111 @@ def calculate_r(N: int) -> float:
         N (int): The number of residues between the terminal and the helix.
 
     Returns:
-        float: The calculated distance r.
+        float: The calculated distance r in Ångströms.
     """
     r = 0.1 + (N+1) * 2
     return r
 
 
-def electrostatic_interaction_energy(qi: float, qp: float, r: float, I: float, T:float) -> float:
-    """Calculate the interaction energy between two charges.
+def calculate_permittivity(T: int) -> float:
+    """Calculate the relative permittivity of water at a given temperature.
+    From J. Am. Chem. Soc. 1950, 72, 7, 2844-2847
+    https://doi.org/10.1021/ja01163a006
 
     Args:
-        qi (float): Charge of the first residue.
-        qp (float): Charge of the second residue.
-        r (float): Distance between the residues.
-        I (float): Ionic strength of the solution.
+        T (int): Temperature in Kelvin.
+
+    Returns:
+        float: The relative permittivity of water.
+    """
+    epsilon_r = (
+        5321 / T 
+        + 233.76 
+        - 0.9297 * T 
+        + 0.1417 * 1e-2 * T**2 
+        - 0.8292 * 1e-6 * T**3
+    )
+    return epsilon_r
+
+
+def debye_huckel_screening_parameter(ionic_strength: float, T: int) -> float:
+    """Calculate the Debye-Huckel screening parameter K.
+    Equation 7 from Lacroix, 1998.
+
+    Args:
+        ionic_strength (float): Ionic strength of the solution in mol/L.
+        T (int): Temperature in Kelvin.
+
+    Returns:
+        float: The Debye-Huckel screening parameter K.
+    """
+    # TODO: Is this function actually needed anywhere???
+
+    N_A = 6.022e23  # Avogadro's number in mol^-1
+    e = 1.602e-19  # Elementary charge in Coulombs
+    k_B = 1.38e-23  # Boltzmann constant in J/K
+
+    # Convert ionic strength to mol/m**3
+    ionic_strength = ionic_strength * 1000
+
+    # Calculate Debye screening parameter kappa
+    kappa = math.sqrt((8 * math.pi * N_A * e**2 * ionic_strength) / (1000 * k_B * T))
+
+    return kappa
+
+
+def debue_screening_length(ionic_strength: float, T: int) -> float:
+    """Calculate the Debye screening length in electrolyte.
+    ISBN 978-0-444-63908-0
+
+    Args:
+        ionic_strength (float): Ionic strength of the solution in mol/L.
+        T (int): Temperature in Kelvin.
+
+    Returns:
+        float: The Debye length kappa.
+    """
+    # Constants
+    epsilon_0 = 8.854e-12  # Permittivity of free space in C^2/(Nm^2)
+
+    # Temperature dependent relative permittivity of water
+    epsilon_r = calculate_permittivity(T)
+
+    N_A = 6.022e23  # Avogadro's number in mol^-1
+    e = 1.602e-19  # Elementary charge in Coulombs
+    k_B = 1.38e-23  # Boltzmann constant in J/K
+
+    # Convert ionic strength to mol/m**3
+    ionic_strength = ionic_strength * 1000
+
+    # Calculate Debye length
+    kappa = math.sqrt((2 * N_A * e**2 * ionic_strength) / (epsilon_0 * epsilon_r * k_B * T))
+
+    return kappa
+
+
+def calculate_term_dipole_interaction_energy(mu_helix: float, distance_r: float, screening_factor: float, T: float) -> float:
+    """Calculate the interaction energy between charged termini and the helix dipole.
+    Uses equation 10.62 from DOI 10.1007/978-1-4419-6351-2_10 as a base.
+
+    Args:
+        mu_helix (float): Helix dipole moment.
+        distance_r (float): Distance from the terminal to the helix in Ångströms.
+        screening_factor (float): Debye-Huckel screening factor.
         T (float): Temperature in Kelvin.
 
     Returns:
         float: The interaction energy.
     """
-     # Constants
-    epsilon_0 = 8.854e-12  # Permittivity of free space in C^2/(Nm^2)
-    epsilon_r = 88.  # Relative permittivity (dielectric constant) of water at 273 K
-    N_A = 6.022e23  # Avogadro's number in mol^-1
-    e = 1.602e-19  # Elementary charge in Coulombs
-    
-    r = r * 1e-10 # Convert distance from Ångströms to meters
-    coulomb_term = e**2 * qi * qp / (3 * math.pi * epsilon_0 * epsilon_r * r) 
-    kappa = debye_huckel_full(r, I, T)
-    energy_joules = coulomb_term * math.exp(-kappa * r)
-    energy_kcal_mol = N_A * energy_joules / 4184
-    return energy_kcal_mol
+    B_kappa = 332.  # in kcal Å / (mol e^2)
+    epsilon_r = calculate_permittivity(T)  # Relative permittivity of water
 
-def debye_huckel_full_new(distance_r: float, ionic_strength: float, T: int) -> float:
-    """Calculate the Debye-Huckel parameter K.
-    Equation 7 from Lacroix, 1998.
-    Args:
-        distance_r (float): Distance from the terminal to the helix in Ångströms.
-        ionic_strength (float): Ionic strength of the solution in mol/L.
-        T (int): Temperature in Kelvin.
-    Returns:
-        float: The Debye-Huckel parameter K.
-    """
-    N_A = 6.022e23  # Avogadro's number in mol^-1
-    e = 1.602e-19  # Elementary charge in Coulombs
-    k_B = 1.38e-23  # Boltzmann constant in J/K
-    # Convert distance from Ångströms to meters
-    distance_r = distance_r * 1e-10
-    # Convert ionic strength to mol/m**3
-    ionic_strength = ionic_strength * 1000
-    # Calculate Debye screening parameter kappa
-    kappa = math.sqrt((8 * math.pi * N_A * e**2 * ionic_strength) / (1000 * k_B * T))
-    return kappa
+    # In the form of equation (10.62) from DOI 10.1007/978-1-4419-6351-2_10
+    potential_at_distance_r = B_kappa * screening_factor / (epsilon_r * distance_r)
 
+    # Interaction energy
+    energy = mu_helix * potential_at_distance_r
 
-def debye_huckel_full(distance_r: float, ionic_strength: float, T: int) -> float:
-    """Calculate the Debye-Huckel screening factor.
-
-    Args:
-        distance_r (float): Distance from the terminal to the helix in Ångströms.
-        ionic_strength (float): Ionic strength of the solution in mol/L.
-        T (int): Temperature in Kelvin.
-
-    Returns:
-        float: The Debye-Huckel screening factor.
-    """
-    # Constants
-    epsilon_0 = 8.854e-12  # Permittivity of free space in C^2/(Nm^2)
-    #epsilon_r = 88.  # Relative permittivity (dielectric constant) of water at 273 K
-    # Temperature dependent relative permittivity of water
-    # from # J. Am. Chem. Soc. 1950, 72, 7, 2844–2847
-    epsilon_r = 5321/T+233.76-0.9297*T+0.1417*1e-2*T*T-0.8292*1e-6*T**3  
-
-
-    N_A = 6.022e23  # Avogadro's number in mol^-1
-    e = 1.602e-19  # Elementary charge in Coulombs
-    k_B = 1.38e-23  # Boltzmann constant in J/K
-
-    # Convert distance from Ångströms to meters
-    distance_r = distance_r * 1e-10
-
-    # Convert ionic strength to mol/m**3
-    ionic_strength = ionic_strength * 1000
-
-    # Calculate Debye screening parameter kappa
-    kappa = math.sqrt((2 * N_A * e**2 * ionic_strength) / (epsilon_0 * epsilon_r * k_B * T))
-
-    # Calculate the screening factor e^(-kappa * r)
-    screening_factor = math.exp(-kappa * distance_r)
-    return screening_factor
-
-
-def calculate_interaction_energy(mu_helix: float, distance_r: float, screening_factor: float) -> float:
-    """Calculate the interaction energy between charged termini and the helix dipole.
-
-    Args:
-        mu_helix (float): Helix dipole moment.
-        distance_r (float): Distance from the terminal to the helix.
-        screening_factor (float): Debye-Huckel screening factor.
-
-    Returns:
-        float: The interaction energy.
-    """
-    coulomb_constant = 332. # in kcal Å / (mol e^2)
-     #epsilon_r = 88.  # Relative permittivity (dielectric constant) of water at 273 K
-    # Temperature dependent relative permittivity of water
-    # from # J. Am. Chem. Soc. 1950, 72, 7, 2844–2847
-    epsilon_r = 5321/T+233.76-0.9297*T+0.1417*1e-2*T*T-0.8292*1e-6*T**3  
-
-    energy = coulomb_constant / epsilon_r * (mu_helix / distance_r) * screening_factor
     return energy
 
 
@@ -670,32 +666,67 @@ def get_dG_terminals(pept: str, i: int, j: int, ionic_strength: float, pH: float
     residue = helix[0]
     # TODO: Add values for each aa
     qKaN = pka_values.loc['Nterm', 'pKa']
-    distance_r = calculate_r(i)  # Distance to N terminal
-    screening_factor = debye_huckel_full(distance_r, ionic_strength, T) 
-    N_term_energy = calculate_interaction_energy(mu_helix, distance_r, screening_factor)
-    q = basic_residue_ionization(pH, qKaN, N_term_energy, T) # TODO: ?)
+    distance_r_angstrom = calculate_r(i)  # Distance to N terminal
+    distance_r_meter = distance_r_angstrom * 1e-10  # Convert distance from Ångströms to meters
+    kappa = debue_screening_length(ionic_strength, T)
+    screening_factor = math.exp(-kappa * distance_r_meter) # Second half of equation 6 from Lacroix, 1998.
+    N_term_energy = calculate_term_dipole_interaction_energy(mu_helix, distance_r_angstrom, screening_factor, T)
+    q = basic_residue_ionization(pH, qKaN, N_term_energy, T)
     N_term_energy *= q
-    #print(f"{q=}")
-    #print(f"{N_term_energy=}")
     N_term[0] = N_term_energy
 
     # C terminal
     residue = helix[-1]
     # TODO: Add values for each aa
     qKaC = pka_values.loc['Cterm', 'pKa']
-    distance_r = calculate_r(len(pept) - (i + j))  # Distance to C terminal
-    screening_factor = debye_huckel_full(distance_r, ionic_strength, T) 
-    C_term_energy = calculate_interaction_energy(mu_helix, distance_r, screening_factor)
-    q = acidic_residue_ionization(pH, qKaC, C_term_energy, T) # TODO: ?)
+    distance_r_angstrom = calculate_r(len(pept) - (i + j))  # Distance to C terminal
+    distance_r_meter = distance_r_angstrom * 1e-10  # Convert distance from Ångströms to meters
+    kappa = debue_screening_length(ionic_strength, T)
+    screening_factor = math.exp(-kappa * distance_r_meter) # Second half of equation 6 from Lacroix, 1998.
+    C_term_energy = calculate_term_dipole_interaction_energy(mu_helix, distance_r_angstrom, screening_factor, T)
+    q = acidic_residue_ionization(pH, qKaC, C_term_energy, T)
     C_term_energy *= -q
     C_term[-1] = C_term_energy
-    #print(f"{q=}")
-    #print(f"{C_term_energy=}")   
     return N_term, C_term
 
 
+def electrostatic_interaction_energy(qi: float, qp: float, r: float, ionic_strength: float, T:float) -> float:
+    """Calculate the interaction energy between two charges by 
+    applying equation 6 from Lacroix, 1998.
+
+    Args:
+        qi (float): Charge of the first residue.
+        qp (float): Charge of the second residue.
+        r (float): Distance between the residues in Ångströms.
+        ionic_strength (float): Ionic strength of the solution in mol/L.
+        T (float): Temperature in Kelvin.
+
+    Returns:
+        float: The interaction energy in kcal/mol.
+    """
+     # Constants
+    epsilon_0 = 8.854e-12  # Permittivity of free space in C^2/(Nm^2)
+    epsilon_r = calculate_permittivity(T) # Relative permittivity (dielectric constant) of water at 273 K
+    N_A = 6.022e23  # Avogadro's number in mol^-1
+    e = 1.602e-19  # Elementary charge in Coulombs
+    
+    r = r * 1e-10 # Convert distance from Ångströms to meters
+    coulomb_term = (e**2 * qi * qp) / (3 * math.pi * epsilon_0 * epsilon_r * r) # TODO: The canonical equation has 4 in the denominator, not 3. Why?
+    kappa = debue_screening_length(ionic_strength, T)
+    energy_joules = coulomb_term * math.exp(-kappa * r)
+    energy_kcal_mol = N_A * energy_joules / 4184
+    return energy_kcal_mol
+
+
 def find_charged_pairs(seq: str) -> list[tuple[str, int]]:
-    """Find all pairs of charged residues in a sequence and their distance."""
+    """Find all pairs of charged residues in a sequence and their distance.
+
+    Args:
+        seq (str): The peptide sequence.
+
+    Returns:
+        list[tuple[str, int]]: List of pairs of charged residues and their distance.
+    """
     charged_amino_acids = {'K', 'R', 'H', 'D', 'E'}
     positions = [(i + 1, aa) for i, aa in enumerate(seq) if aa in charged_amino_acids]
     result = []
@@ -713,8 +744,18 @@ def get_dG_electrost(pept: str, i: int, j: int, ionic_strength: float, pH: float
     """From Lecroix et al. 1998: 
     'This new term includes all electrostatic interactions between two charged residues 
     inside and outside the helical segment'
-    Use equations (5) - (11) from the 1998 paper.
+    Use equations (5) - (11) from the 1998 lacroix paper.
+
+    Args:
+        pept (str): The peptide sequence.
+        i (int): The helix start index, python 0-indexed.
+        j (int): The helix length.
+        ionic_strength (float): Ionic strength of the solution.
+        pH (float): pH of the solution.
+        T (float): Temperature in Kelvin.
     """
+    # TODO: Should we add the N- and C-term backbone charges here as well? Or better separated into a different function?
+
     helix = get_helix(pept, i, j)
     charged_pairs = find_charged_pairs(helix)
     energy_sum = 0.0
@@ -722,31 +763,37 @@ def get_dG_electrost(pept: str, i: int, j: int, ionic_strength: float, pH: float
         pair, distance = p[0], f'i+{p[1]}'
         helix_dist = table_6_helix_lacroix.loc[pair, distance]
         coil_dist = table_6_coil_lacroix.loc[pair, distance]
-        # Eq (6). First assume qp = qi = 1
+
+        # Lacroix Eq (6). First assume qp = qi = 1
         qi, qp = 1, 1
         G_hel = electrostatic_interaction_energy(qi, qp, helix_dist, ionic_strength, T) 
-        G_rc = electrostatic_interaction_energy(qi, qp, coil_dist, ionic_strength, T) 
-        # Eq (8)
+        G_rc = electrostatic_interaction_energy(qi, qp, coil_dist, ionic_strength, T)
+
+        # Lacroix Eq (8)
         res1, res2 = pair
         pKa_ref_1 = pka_values.loc[res1, 'pKa']
         pKa_ref_2 = pka_values.loc[res2, 'pKa']
         pKa_rc_1, pKa_rc_2 = pKa_ref_1 + G_rc / (2.3 * 1.987e-3 * T), pKa_ref_2 + G_rc / (2.3 * 1.987e-3 * T)
-        # Eq (9)
+
+        # Lacroix Eq (9)
         pKa_hel_1, pKa_hel_2 = pKa_ref_1 + G_hel / (2.3 * 1.987e-3 * T), pKa_ref_2 + G_hel / (2.3 * 1.987e-3 * T)
-        # Eq (10)
+
+        # Lacroix Eq (10)
         if res1 in ['D', 'E']:
             q1_hel = acidic_residue_ionization(pH, pKa_hel_1, G_hel, T)
             q1_rc = acidic_residue_ionization(pH, pKa_rc_1, G_rc, T)
         else:
             q1_hel = basic_residue_ionization(pH, pKa_hel_1, G_hel, T)
             q1_rc = basic_residue_ionization(pH, pKa_rc_1, G_rc, T)
+
         if res2 in ['D', 'E']:
             q2_hel = acidic_residue_ionization(pH, pKa_hel_2, G_hel, T)
             q2_rc = acidic_residue_ionization(pH, pKa_rc_2, G_rc, T)
         else:
             q2_hel = basic_residue_ionization(pH, pKa_hel_2, G_hel, T)
             q2_rc = basic_residue_ionization(pH, pKa_rc_2, G_rc, T)
-        # Eq (6) again, with the updated values
+
+        # Lacroix Eq (6) again, with the updated values
         G_hel = electrostatic_interaction_energy(q1_hel, q2_hel, helix_dist, ionic_strength, T)
         G_rc = electrostatic_interaction_energy(q1_rc, q2_rc, coil_dist, ionic_strength, T)
         energy_sum += G_hel - G_rc
