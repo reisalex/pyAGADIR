@@ -1,4 +1,4 @@
-
+from typing import Dict
 
 
 def is_valid_peptide_sequence(pept: str) -> None:
@@ -68,3 +68,41 @@ def is_valid_index(pept: str, i: int, j: int) -> None:
     if i + j > len(pept):
         raise ValueError("The sum of the indexes must be less than the length of the sequence.")
     
+
+def calculate_ionic_strength(ion_concentrations: Dict[str, float]) -> float:
+    """
+    Calculate the ionic strength of a solution containing various ions commonly used in biological systems.
+    
+    Args:
+        ion_concentrations: A dictionary with ion names as keys and their 
+                            concentrations (in M) as values.
+    
+    Returns:
+        The ionic strength of the solution in M.
+    """
+    ion_charges = {
+        # Monovalent cations
+        "Na+": 1, "K+": 1, "Li+": 1, "NH4+": 1,
+        
+        # Divalent cations
+        "Ca2+": 2, "Mg2+": 2, "Mn2+": 2, "Fe2+": 2, "Zn2+": 2, "Cu2+": 2,
+        
+        # Monovalent anions
+        "Cl-": -1, "Br-": -1, "I-": -1, "F-": -1, "NO3-": -1, "HCO3-": -1,
+        
+        # Divalent anions
+        "SO42-": -2, "HPO42-": -2,
+        
+        # Trivalent anions
+        "PO43-": -3,
+
+    }
+    
+    I = 0.5 * sum(conc * ion_charges[ion]**2 for ion, conc in ion_concentrations.items() if ion in ion_charges)
+    
+    # Check for any unrecognized ions
+    unrecognized = [ion for ion in ion_concentrations if ion not in ion_charges]
+    if unrecognized:
+        print(f"Warning: The following ions were not recognized and were not included in the calculation: {', '.join(unrecognized)}")
+    
+    return I

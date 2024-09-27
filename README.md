@@ -51,41 +51,23 @@ dG_Int array (kcal/mol): [0.96 0.8  0.76 1.13 0.8  0.95 0.95 1.08 0.8  0.76 1.12
  1.13 1.18 0.67 0.93 1.18]
 ```
 
-## Stored Data in ModelResult
+## Capping
+In many helix stability studies, it is common to "cap" the helix by adding on acylation, succinylation, or amidation at the terminal ends of the helix. These modifications are used to stabilize the helix by neutralizing the charges at the N-terminus or C-terminus, which can otherwise destabilize the helix by introducing repulsive interactions or by interfering with the regular hydrogen bonding pattern that defines the helical structure.
 
-```
-> seq       :: peptide sequence (str)
+    Acylation is the addition of an acyl group (such as an acetyl group) to the N-terminus. This modification similarly neutralizes the positive charge on the N-terminus, preventing electrostatic interactions that could destabilize the helical structure.
 
-# for each residue/index position
-> int_array :: dG_Int   (np.array of shape(seq,1))
-> i1_array  :: dG_i,i+1 (np.array of shape(seq,1))
-> i3_array  :: dG_i,i+3 (np.array of shape(seq,1))
-> i4_array  :: dG_i,i+4 (np.array of shape(seq,1))
-> N_array   :: dG_Ncap  (np.array of shape(seq,1))
-> C_array   :: dG_Ccap  (np.array of shape(seq,1))
+    Succinylation, which involves the attachment of a succinyl group to the N-terminus, can also be used as a modification to modulate charge and influence solubility, often employed for similar stabilizing effects on the helix termini.
 
-> dG_dict_mat :: dG_dict's in list of lists where indexing corresponds to [j][i] (see Muñoz, V., & Serrano, L. (1994)); dG_dict includes each term used in computing dG_Helix for a given helical segment of length j at position i (Python indexing).
+    Amidation typically occurs at the C-terminus, where the carboxyl group is converted to an amide, reducing the net negative charge. This can help improve the helix's stability, particularly in peptides, by minimizing the disruption caused by terminal charges.
 
-# statistical weights and partition functions
-> K_tot       :: sum of statistical weights for AGADIR1s (one-sequence) (float)
-> K_tot_array :: array of summed statistical weights for AGADIR (residue) (np.array of shape(seq,1))
-> Z           :: residue parition function for AGADIR1s (one-sequence) (float)
-> Z_array     :: residue parition function for AGADIR (residue) (np.array of shape(seq,1))
-
-# final predicted values
-> helical_propensity :: probability that each residue is in the alpha-helical conformation (np.array of shape(seq,1))
-> percent_helix      :: mean helical propensity, or probability of peptide is an alpha-helix (float)
-```
+In pyAgadir we have chosen to represent acylation with the single letter **Z**, succinylation with **X**, and amidation with **B**. The peptide **ILKSLEEFLKVTLRSTRQT**, when capped with acylation and amidation, would be written **ZILKSLEEFLKVTLRSTRQTB** when submitted to pyAgadir. When extracting a single alpha helix from a longer protein chain, such as a pdb structure, you should consider capping it in order to simulate the absence of N- and C-terminal charges and obtain accurate estimates of helicity.
 
 ## Questions / To Do
 
 * How is the i+1 term supposed to be calculated?
 * How do we add charge interactions in the i+3 and i+4 terms? Potental duplication of electrostatics term?
-* Why is capping 0.5 for Ala on C-terminal instead of 0.4?
-* Why is capping 0.45 for Gly on C-terminal instead of 0.0?
 * Test correct functioning of staple term or schellman term.
-* We need to locate a source for the N- and C-terminal values for the individual amino acids. Currently using average value from Stryer.
-* Calcualte water dielectric constant from temperature.
+* We need to locate a source for the N- and C-terminal pKa values for the individual amino acids. Currently using average value from Stryer.
 * Ensure that N- and C-terminal capping is dealt with appropriately. Introduce protein "capping" for accurate estimations of helices in proteins?
 * Update pytests to fit new model.
 
