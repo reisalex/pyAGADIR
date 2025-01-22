@@ -1,0 +1,10 @@
+name: agadir
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.10
+  - numpy>=1.24.1
+  - pandas>=1.5.2
+  - pytest>=8.1.1
+  - ipykernel
